@@ -1,15 +1,18 @@
-// --- 1. NUEVO: Importar herramientas de Firebase ---
+
+// Import firebase auth and firestore modules
+
 import { auth, db } from './firebase-init.js';
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 /**
  * @file dashboard.js
- * Lógica para el dashboard, incluyendo el menú lateral colapsable y animaciones.
+ * Principal logic from the dashboard page.
+ * Now integrated with Firebase Auth and Firestore.
  */
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- LÓGICA DE AUTENTICACIÓN ---
+    // Authentication state observer
 
     // onAuthStateChanged es el "vigilante" de Firebase.
     // Se dispara CADA VEZ que la página carga o el estado de login cambia.
@@ -29,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // --- LÓGICA DEL MENÚ LATERAL (Sin cambios) ---
+    // --- LÓGICA DEL MENÚ LATERAL ---
     setupSidebar();
 });
 
