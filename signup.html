@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Tutor - Registrarse</title>
+    <link rel="stylesheet" href="src/css/signup.css">
+</head>
+
+<body>
+    <div class="container">
+        <!-- Welcome Section - Left Side -->
+        <div class="left-side">
+            <div class="welcome-content">
+                <div class="logo">
+                    <span>Java Tutor</span>
+                </div>
+                <h1>Registrate</h1>
+                <p>Completa estos sencillos pasos para registrar<br>tu cuenta.</p>
+            </div>
+        </div>
+
+        <!-- Form Section - Right Side -->
+        <div class="right-side">
+            <!-- Sign Up Form -->
+            <div class="form-container" id="signupForm">
+                <h2>Crear cuenta</h2>
+                <p class="subtitle">Ingresa tus datos personales para crear tu cuenta.</p>
+
+                <form id="registerForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="firstName">Nombre</label>
+                            <input type="text" id="firstName" placeholder="ej. Jose" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="middleName">Segundo nombre</label>
+                            <input type="text" id="middleName" placeholder="ej. Manuel">
+                        </div>
+                        <div class="form-group">
+                            <label for="apellidoPaterno">Apellido Paterno</label>
+                            <input type="text" id="apellidoPaterno" placeholder="ej. Cortes" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="apellidoMaterno">Apellido Materno</label>
+                            <input type="text" id="apellidoMaterno" placeholder="ej. Ceron" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="matricula">Matrícula</label>
+                            <input type="text" id="matricula" placeholder="ej. 230110688" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="grupo">Grupo</label>
+                            <input type="text" id="grupo" placeholder="ej. A" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="semestre">Semestre</label>
+                        <select id="semestre" required>
+                            <option value="">Selecciona tu semestre</option>
+                            <option value="1">1° Semestre</option>
+                            <option value="2">2° Semestre</option>
+                            <option value="3">3° Semestre</option>
+                            <option value="4">4° Semestre</option>
+                            <option value="5">5° Semestre</option>
+                            <option value="6">6° Semestre</option>
+                            <option value="7">7° Semestre</option>
+                            <option value="8">8° Semestre</option>
+                            <option value="9">9° Semestre</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="email">Correo electrónico</label>
+                        <input type="email" id="email" placeholder="ej. deepdevjose@gmail.com" required>
+                        <span class="error-message" id="emailError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="githubUsername">Usuario de GitHub</label>
+                        <input type="text" id="githubUsername" placeholder="ej. deepdevjose" required>
+                        <span class="error-message" id="githubError"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <div class="password-input">
+                            <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
+                            <button type="button" class="toggle-password">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                    <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                            </button>
+                        </div>
+                        <small>Debe tener al menos 6 caracteres.</small>
+                    </div>
+
+                    <button type="submit" class="submit-btn">Registrarse</button>
+
+                    <p class="switch-form">
+                        ¿Ya tienes una cuenta? <a href="signin.html" id="showLogin">Inicia sesión</a>
+                    </p>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script type="module" src="src/js/firebase-init.js"></script>
+    <script type="module" src="src/js/signup.js"></script>
+</body>
+
+</html>
