@@ -1,4 +1,4 @@
-// --- 1. NUEVO: Importar herramientas de Firebase ---
+// import firebase auth and firestore modules
 import { auth, db } from './firebase-init.js'; 
 import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
