@@ -1,17 +1,19 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Java Tutor - Dashboard</title>
     <link rel="stylesheet" href="src/css/dashboard.css">
-    
+
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
+
 <body>
 
     <div class="dashboard-layout">
-        
+
         <nav class="sidebar">
             <div class="sidebar-header">
                 <a href="#" class="logo">
@@ -30,7 +32,7 @@
                         <span class="link-text">Reporte de Avances</span>
                     </a>
                 </li>
-                
+
                 <li class="menu-item has-submenu">
                     <a href="#">
                         <i data-feather="check-square"></i>
@@ -85,7 +87,7 @@
             </header>
 
             <div class="content-wrapper">
-                
+
                 <!-- Widget Grid - Stats Cards -->
                 <div class="widget-grid">
                     <!-- Tests Pasados -->
@@ -165,7 +167,8 @@
                             <div class="progress-fill" id="progressFill" style="width: 0%"></div>
                         </div>
                         <div class="stat-label" style="margin-top: 12px;">
-                            <span id="completedExercises">0</span> de <span id="totalExercises">50</span> ejercicios completados
+                            <span id="completedExercises">0</span> de <span id="totalExercises">50</span> ejercicios
+                            completados
                         </div>
                     </div>
 
@@ -204,11 +207,11 @@
         </main>
 
     </div>
-
-    <script src="src/js/dashboard.js"></script>
-    
+    <script type="module" src="src/js/firebase-init.js"></script>
+    <script type="module" src="src/js/dashboard.js"></script>
     <script>
-      feather.replace();
+        feather.replace();
     </script>
 </body>
+
 </html>

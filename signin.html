@@ -31,8 +31,8 @@
                 <form id="registerForm">
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="email">Correo electrónico</label>
-                            <input type="email" id="email" placeholder="ej. deepdevjose@gmail.com" required>
+                            <label for="email">Correo electrónico, Matrícula o Usuario de GitHub</label>
+                            <input type="text" id="email" placeholder="Correo, Matrícula o Usuario GitHub" required>
                             <span class="error-message" id="emailError"></span>
                         </div>
                         <br>
@@ -58,7 +58,8 @@
             </div>
         </div>
     </div>
-    <script src="src/js/signin.js"></script>
+    <script type="module" src="src/js/firebase-init.js"></script>
+    <script type="module" src="src/js/signin.js"></script>
 </body>
 
 </html>
