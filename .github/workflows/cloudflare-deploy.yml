@@ -9,7 +9,7 @@ on:
 jobs:
   # Trabajo único: Desplegar a producción
   deploy_production:
-    # Condición: Solo ejecutar si el PR fue realmente fusionado
+    # Condición: Solo ejecutar cuando el PR fue realmente fusionado
     if: github.event.pull_request.merged == true
     
     runs-on: ubuntu-latest
