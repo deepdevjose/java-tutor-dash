@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
             setTimeout(() => {
                 element.classList.add('visible');
             }, delay);
-            
+
             // Incrementar el retraso para el siguiente elemento
             delay += 200; // 200ms entre cada animación
         }

@@ -1,8 +1,7 @@
-// import firebase auth and firestore modules
+// Importar módulos de Firebase Auth y Firestore
 import { auth, db } from './firebase-init.js';
-import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
+import { signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { collection, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-
 
 /**
  * @file signin.js
@@ -12,31 +11,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SELECCIÓN DE ELEMENTOS ---
     const signinForm = document.getElementById('registerForm');
-    
+
     if (!signinForm) {
-        return; 
+        return;
     }
 
-    const emailInput = document.getElementById('email'); // Este es ahora type="text"
+    const emailInput = document.getElementById('email'); // Este es type="text"
     const passwordInput = document.getElementById('password');
     const submitBtn = signinForm.querySelector('.submit-btn');
     const togglePwdBtns = document.querySelectorAll('.toggle-password');
     const formInputs = Array.from(signinForm.querySelectorAll('input:not([type="checkbox"]), select'));
+    const keepLoggedInCheckbox = document.getElementById('keepLoggedIn');
 
-    
     // --- LÓGICA DE NEGOCIO Y EVENTOS ---
-
     /**
-     * Handler (manejador) principal para el envío del formulario.
+     * Handler principal para el envío del formulario.
      */
     const handleFormSubmit = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
 
-        // 1. Obtener el identificador (puede ser email, matricula, o github)
         const loginIdentifier = emailInput.value.trim();
         const password = passwordInput.value;
 
-        // 2. Validaciones simples (ya no validamos email aquí)
+        // Validaciones simples
         if (loginIdentifier.length === 0) {
             showAlert('error', 'Ingresa tu correo, matrícula o usuario de GitHub', signinForm);
             return;
@@ -46,28 +43,37 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        setLoading(true); 
+        setLoading(true);
 
-        // --- [INICIO] INTEGRACIÓN REAL DE FIREBASE (CON MÚLTIPLE LOGIN) ---
+        // --- INTEGRACIÓN REAL DE FIREBASE ---
         try {
-            // 3. Obtener el email real del usuario
+            // 1. Establecer la persistencia ANTES de iniciar sesión
+            // Verifica si el checkbox existe antes de intentar leerlo
+            const persistenceType = keepLoggedInCheckbox && keepLoggedInCheckbox.checked
+                ? browserLocalPersistence // Duradera (meses)
+                : browserSessionPersistence; // Solo hasta cerrar navegador
+
+            await setPersistence(auth, persistenceType);
+            console.log(`Persistencia establecida a: ${keepLoggedInCheckbox && keepLoggedInCheckbox.checked ? 'local' : 'session'}`);
+
+            // 2. Obtener el email real del usuario
             const email = await getEmailFromIdentifier(loginIdentifier);
 
             if (!email) {
-                // Si la función devuelve null, el usuario no se encontró
+                // Usuario no encontrado por ningún identificador
                 showAlert('error', 'Correo, matrícula o usuario de GitHub no encontrado.', signinForm);
-                setLoading(false);
+                setLoading(false); // Detener carga antes de salir
                 return;
             }
 
-            // 4. Si encontramos el email, iniciar sesión
+            // 3. Si encontramos el email, iniciar sesión
             console.log('Usuario encontrado. Iniciando sesión con email:', email);
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
             console.log('Usuario ha iniciado sesión:', userCredential.user.uid);
-            
-            // 5. Éxito: mostrar mensaje y redirigir
+
+            // 4. Éxito: mostrar mensaje y redirigir
             showAlert('success', '¡Inicio de sesión exitoso! Redirigiendo...', signinForm);
-            
+
             setTimeout(() => {
                 window.location.href = 'dashboard.html';
             }, 2000);
@@ -76,19 +82,18 @@ document.addEventListener('DOMContentLoaded', () => {
             // Manejar errores de Firebase
             console.error("Error en Sign In:", error.code, error.message);
             let message = 'Error al iniciar sesión.';
-            
-            // "auth/invalid-credential" es el error para "email no existe" O "contraseña incorrecta"
+
             if (error.code === 'auth/invalid-credential') {
                 message = 'Credenciales incorrectas. Verifica tus datos.';
             } else if (error.code === 'auth/too-many-requests') {
                 message = 'Demasiados intentos. Intenta más tarde.';
             }
-            
+
             showAlert('error', message, signinForm);
         } finally {
             setLoading(false);
         }
-        // --- [FIN] INTEGRACIÓN REAL DE FIREBASE ---
+        // --- FIN INTEGRACIÓN FIREBASE ---
     };
 
     /**
@@ -97,33 +102,30 @@ document.addEventListener('DOMContentLoaded', () => {
      * @returns {Promise<string|null>} - El email del usuario o null si no se encuentra.
      */
     async function getEmailFromIdentifier(identifier) {
-        // 1. Si es un email @gmail.com, lo devolvemos directamente
         if (validateEmail(identifier)) {
             console.log("Identificador es un email.");
             return identifier;
         }
 
-        // 2. Si es de puros números, buscar por matrícula
         if (/^[0-9]+$/.test(identifier)) {
             console.log('Buscando por matrícula:', identifier);
             const matriculaQuery = query(
-                collection(db, "usuarios"), 
+                collection(db, "usuarios"),
                 where("matricula", "==", identifier),
-                limit(1) 
+                limit(1)
             );
             const querySnapshot = await getDocs(matriculaQuery);
 
             if (!querySnapshot.empty) {
                 const userDoc = querySnapshot.docs[0];
                 console.log("Encontrado por matrícula. Email:", userDoc.data().email);
-                return userDoc.data().email; // Devolver el email
+                return userDoc.data().email;
             }
         }
 
-        // 3. Si no es un email ni puros números, buscar por usuario de GitHub
         console.log('Buscando por GitHub:', identifier);
         const githubQuery = query(
-            collection(db, "usuarios"), 
+            collection(db, "usuarios"),
             where("githubUsername", "==", identifier),
             limit(1)
         );
@@ -132,10 +134,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!querySnapshot.empty) {
             const userDoc = querySnapshot.docs[0];
             console.log("Encontrado por GitHub. Email:", userDoc.data().email);
-            return userDoc.data().email; // Devolver el email
+            return userDoc.data().email;
         }
 
-        // 4. Si no se encontró nada
         console.log('No se encontró ningún usuario con ese identificador.');
         return null;
     }
@@ -145,9 +146,8 @@ document.addEventListener('DOMContentLoaded', () => {
      * Controla el estado visual y funcional del botón de submit.
      */
     const setLoading = (isLoading) => {
-        // ... (código sin cambios)
         if (!submitBtn) return;
-        
+
         if (isLoading) {
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
@@ -166,10 +166,8 @@ document.addEventListener('DOMContentLoaded', () => {
      * Permite al usuario navegar entre inputs usando la tecla 'Enter'.
      */
     const handleEnterKeyNavigation = (e, currentIndex) => {
-        // ... (código sin cambios)
         if (e.key === 'Enter') {
-            e.preventDefault(); 
-            
+            e.preventDefault();
             if (currentIndex < formInputs.length - 1) {
                 formInputs[currentIndex + 1].focus();
             } else {
@@ -182,21 +180,19 @@ document.addEventListener('DOMContentLoaded', () => {
      * Alterna la visibilidad de un campo de contraseña (texto/password).
      */
     const togglePasswordVisibility = (e) => {
-        // ... (código sin cambios)
-        const btn = e.currentTarget; 
+        const btn = e.currentTarget;
         const input = btn.closest('.password-input')?.querySelector('input');
-        
+
         if (!input) return;
 
         const type = input.getAttribute('type') === 'password' ? 'text' : 'password';
         input.setAttribute('type', type);
-        
-        btn.style.color = type === 'text' ? '#a855f7' : '#999'; 
+
+        btn.style.color = type === 'text' ? '#a855f7' : '#999';
     };
 
-    
+
     // --- 3. ASIGNACIÓN DE EVENT LISTENERS ---
-    
     signinForm.addEventListener('submit', handleFormSubmit);
 
     togglePwdBtns.forEach(btn => {
@@ -211,7 +207,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 // --- 4. FUNCIONES DE UTILIDAD (Puras) ---
-
 /**
  * Muestra una alerta de éxito o error dentro del formulario.
  */
@@ -222,7 +217,7 @@ function showAlert(type, message, formElement) {
     }
     const alertDiv = document.createElement('div');
     const cssClass = type === 'success' ? 'success' : 'error';
-    alertDiv.className = `message ${cssClass} show alert-message`; 
+    alertDiv.className = `message ${cssClass} show alert-message`;
     alertDiv.style.display = 'block';
     alertDiv.style.marginBottom = '20px';
     alertDiv.setAttribute('role', 'alert');
@@ -233,7 +228,7 @@ function showAlert(type, message, formElement) {
     formElement.prepend(alertDiv);
     setTimeout(() => {
         alertDiv.classList.remove('show');
-        setTimeout(() => alertDiv.remove(), 500); 
+        setTimeout(() => alertDiv.remove(), 500);
     }, 5000);
 }
 

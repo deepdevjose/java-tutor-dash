@@ -1,5 +1,5 @@
 // import firebase auth and firestore modules
-import { auth, db } from './firebase-init.js'; 
+import { auth, db } from './firebase-init.js';
 import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { doc, setDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- SELECCIÓN DE ELEMENTOS ---
     const registerForm = document.getElementById('registerForm');
-    
+
     if (!registerForm) {
         return;
     }
@@ -21,14 +21,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const emailInput = document.getElementById('email');
     const githubInput = document.getElementById('githubUsername');
     const matriculaInput = document.getElementById('matricula');
-    const grupoInput = document.getElementById('grupo'); 
+    const grupoInput = document.getElementById('grupo');
     const togglePwdBtns = document.querySelectorAll('.toggle-password');
     const allFormInputs = Array.from(registerForm.querySelectorAll('input, select'));
     const submitBtn = registerForm.querySelector('.submit-btn');
 
-    let githubTimeout; 
+    let githubTimeout;
 
-    
+
     // --- LÓGICA DE NEGOCIO Y EVENTOS ---
 
     /**
@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
      * @param {Event} e - El objeto de evento 'submit'
      */
     const handleRegisterSubmit = async (e) => {
-        e.preventDefault(); 
+        e.preventDefault();
         setLoading(true);
 
         const formData = {
@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!validateEmail(formData.email)) {
             showMessage('error', 'Por favor, usa una dirección de Gmail válida (@gmail.com)');
             setLoading(false);
-            return; 
+            return;
         }
         if (formData.password.length < 6) {
             showMessage('error', 'La contraseña debe tener al menos 6 caracteres');
@@ -80,7 +80,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        
+
         // --- [INICIO] INTEGRACIÓN REAL DE FIREBASE ---
         // ¡Este es el código que reemplaza tu simulación!
         try {
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Usuario creado en Auth:', user.uid);
 
             // 2. ¡MUY IMPORTANTE! Borrar la contraseña del objeto
-            delete formData.password; 
+            delete formData.password;
 
             // 3. Guardar el resto de los datos en Firestore (Base de Datos)
             // Esto crea un documento en: coleccion "usuarios" -> documento "uid_del_usuario"
@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
      */
     const setLoading = (isLoading) => {
         if (!submitBtn) return;
-        
+
         if (isLoading) {
             submitBtn.disabled = true;
             submitBtn.classList.add('loading');
@@ -179,10 +179,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const handleGitHubInput = () => {
         clearTimeout(githubTimeout);
         const username = githubInput.value.trim();
-        
+
         if (username.length > 2) {
-            githubInput.style.borderColor = '#666'; 
-            
+            githubInput.style.borderColor = '#666';
+
             githubTimeout = setTimeout(async () => {
                 const isValid = await validateGitHub(username);
                 if (!isValid) {
@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     clearError('githubError');
                     githubInput.style.borderColor = '#22c55e';
                 }
-            }, 800); 
+            }, 800);
         } else {
             clearError('githubError');
             githubInput.style.borderColor = '#333';
@@ -213,9 +213,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- 3. ASIGNACIÓN DE EVENT LISTENERS ---
-    
+
     registerForm.addEventListener('submit', handleRegisterSubmit);
-    
+
     emailInput.addEventListener('blur', handleEmailBlur);
     githubInput.addEventListener('input', handleGitHubInput);
     if (matriculaInput) {
@@ -246,7 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
                 e.preventDefault();
                 if (index < allFormInputs.length - 1) {
-                    allFormInputs[index + 1].focus(); 
+                    allFormInputs[index + 1].focus();
                 } else {
                     submitBtn.click();
                 }
@@ -268,7 +268,7 @@ async function validateGitHub(username) {
     if (!username || username.length < 1) return false;
     try {
         const response = await fetch(`https://api.github.com/users/${username}`);
-        return response.ok; 
+        return response.ok;
     } catch (error) {
         console.error('Error validando GitHub:', error);
         return false;
@@ -277,7 +277,7 @@ async function validateGitHub(username) {
 
 function showError(elementId, message) {
     const errorElement = document.getElementById(elementId);
-    if (errorElement) {     
+    if (errorElement) {
         errorElement.textContent = message;
         errorElement.style.display = 'block';
     }
@@ -304,7 +304,7 @@ function showMessage(type, message) {
     messageDiv.className = `message ${type} show`;
     messageDiv.setAttribute('role', 'alert');
     messageDiv.textContent = message;
-    
+
     activeForm.prepend(messageDiv);
 
     setTimeout(() => {
