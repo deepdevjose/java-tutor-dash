@@ -9,6 +9,7 @@ on:
     branches-ignore: [ main ] 
 
 jobs:
+  # --- work 1: preview deployment ---
   deploy_preview:
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
@@ -19,16 +20,17 @@ jobs:
 
       - name: 2. Create firebase-config.js
         run: |
-          echo "export const firebaseConfig = { apiKey: \"${{ secrets.FIREBASE_API_KEY }}\", authDomain: \"${{ secrets.FIREBASE_AUTH_DOMAIN }}\", projectId: \"${{ secrets.FIREBASE_PROJECT_ID }}\", storageBucket: \"${{ secrets.FIREBASE_STORAGE_BUCKET }}\", messagingSenderId: \"${{ secrets.FIREMESSAGING_SENDER_ID }}\", appId: \"${{ secrets.FIREBASE_APP_ID }}\" };" > src/js/firebase-config.js
+          echo "export const firebaseConfig = { apiKey: \"${{ secrets.FIREBASE_API_KEY }}\", authDomain: \"${{ secrets.FIREBASE_AUTH_DOMAIN }}\", projectId: \"${{ secrets.FIREBASE_PROJECT_ID }}\", storageBucket: \"${{ secrets.FIREBASE_STORAGE_BUCKET }}\", messagingSenderId: \"${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}\", appId: \"${{ secrets.FIREBASE_APP_ID }}\" };" > src/js/firebase-config.js
 
       - name: 3. Deploy to Cloudflare (Preview)
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/pages-action@v1 
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: java-tutor-dash
-          directory: .
+          projectName: java-tutor-dash 
+          directory: . 
 
+  # --- work 2: production deployment ---
   deploy_production:
     if: github.event_name == 'pull_request' && github.event.pull_request.merged == true
     runs-on: ubuntu-latest
@@ -42,10 +44,10 @@ jobs:
           echo "export const firebaseConfig = { apiKey: \"${{ secrets.FIREBASE_API_KEY }}\", authDomain: \"${{ secrets.FIREBASE_AUTH_DOMAIN }}\", projectId: \"${{ secrets.FIREBASE_PROJECT_ID }}\", storageBucket: \"${{ secrets.FIREBASE_STORAGE_BUCKET }}\", messagingSenderId: \"${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}\", appId: \"${{ secrets.FIREBASE_APP_ID }}\" };" > src/js/firebase-config.js
 
       - name: 3. Deploy to Cloudflare (Production)
-        uses: cloudflare/wrangler-action@v3
+        uses: cloudflare/pages-action@v1
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           projectName: java-tutor-dash
-          directory: .
-          branch: main
+          directory: . 
+          branch: main 
