@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Tutor - Dashboard</title>
+    <link rel="stylesheet" href="src/css/dashboard.css">
+
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+
+<body>
+
+    <div class="dashboard-layout">
+
+        <nav class="sidebar">
+            <div class="sidebar-header">
+                <a href="#" class="logo">
+                    <img src="src/assets/icons/main_icon.png" alt="Logo" class="logo-icon">
+                    <span class="logo-text">Java Tutor</span>
+                </a>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i data-feather="chevrons-left"></i>
+                </button>
+            </div>
+
+            <ul class="menu-links">
+                <li class="menu-item active">
+                    <a href="#">
+                        <i data-feather="home"></i>
+                        <span class="link-text">Reporte de Avances</span>
+                    </a>
+                </li>
+
+                <li class="menu-item has-submenu">
+                    <a href="#">
+                        <i data-feather="check-square"></i>
+                        <span class="link-text">Tests Ejercicios</span>
+                        <i data-feather="chevron-right" class="submenu-toggle"></i>
+                    </a>
+                    <ul class="submenu">
+                        <li class="submenu-item"><a href="#">Pasados</a></li>
+                        <li class="submenu-item"><a href="#">Fallados</a></li>
+                        <li class="submenu-item"><a href="#">Totales</a></li>
+                    </ul>
+                </li>
+
+                <li class="menu-item">
+                    <a href="#">
+                        <i data-feather="settings"></i>
+                        <span class="link-text">Configuración</span>
+                    </a>
+                </li>
+            </ul>
+
+            <div class="sidebar-footer">
+                <div class="commit-info">
+                    <i data-feather="git-commit"></i>
+                    <div class="commit-details">
+                        <span class="commit-label">Último intento (Commit):</span>
+                        <span class="commit-date" id="lastCommitDate">Aún no hay commits</span>
+                    </div>
+                </div>
+
+                <div class="user-profile">
+                    <img src="https://via.placeholder.com/40" alt="Avatar" class="user-avatar">
+                    <div class="user-details">
+                        <span class="user-name" id="userName">DeepDevJose</span>
+                        <a href="signin.html" class="logout-link">Cerrar sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <main class="main-content">
+            <header class="main-header">
+                <h1 id="pageTitle">Reporte de Avances</h1>
+                <div class="header-actions">
+                    <button class="action-btn">
+                        <i data-feather="bell"></i>
+                    </button>
+                    <button class="action-btn">
+                        <i data-feather="help-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="content-wrapper">
+
+                <!-- Widget Grid - Stats Cards -->
+                <div class="widget-grid">
+                    <!-- Passed Tests -->
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3>Tests Pasados</h3>
+                            <div class="widget-icon">
+                                <i data-feather="check-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat" id="testsPassed">0</div>
+                        <div class="stat-label">
+                            <span class="stat-change positive">
+                                <i data-feather="trending-up"></i>
+                                +12%
+                            </span>
+                            vs último mes
+                        </div>
+                    </div>
+
+                    <!-- Failed Tests -->
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3>Tests Fallados</h3>
+                            <div class="widget-icon">
+                                <i data-feather="x-circle"></i>
+                            </div>
+                        </div>
+                        <div class="stat" id="testsFailed">0</div>
+                        <div class="stat-label">
+                            <span class="stat-change negative">
+                                <i data-feather="trending-down"></i>
+                                -8%
+                            </span>
+                            vs último mes
+                        </div>
+                    </div>
+
+                    <!-- Total Tests -->
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3>Tests Totales</h3>
+                            <div class="widget-icon">
+                                <i data-feather="file-text"></i>
+                            </div>
+                        </div>
+                        <div class="stat" id="testsTotal">0</div>
+                        <div class="stat-label">
+                            Ejercicios completados
+                        </div>
+                    </div>
+
+                    <!-- Percentage of Success -->
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3>Tasa de Éxito</h3>
+                            <div class="widget-icon">
+                                <i data-feather="target"></i>
+                            </div>
+                        </div>
+                        <div class="stat" id="successRate">0%</div>
+                        <div class="stat-label">
+                            De todos los intentos
+                        </div>
+                    </div>
+
+                    <!-- Total Progress -->
+                    <div class="widget progress-widget">
+                        <div class="widget-header">
+                            <h3>Progreso Total del Curso</h3>
+                            <div class="widget-icon">
+                                <i data-feather="bar-chart-2"></i>
+                            </div>
+                        </div>
+                        <div class="stat" id="courseProgress">0%</div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                        </div>
+                        <div class="stat-label" style="margin-top: 12px;">
+                            <span id="completedExercises">0</span> de <span id="totalExercises">50</span> ejercicios
+                            completados
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3>Última Actividad</h3>
+                            <div class="widget-icon">
+                                <i data-feather="activity"></i>
+                            </div>
+                        </div>
+                        <div class="activity-list">
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i data-feather="git-commit"></i>
+                                </div>
+                                <div class="activity-details">
+                                    <div class="activity-title">Último commit</div>
+                                    <div class="activity-time" id="lastActivityTime">Aún no hay commits</div>
+                                </div>
+                            </div>
+                            <div class="activity-item">
+                                <div class="activity-icon">
+                                    <i data-feather="code"></i>
+                                </div>
+                                <div class="activity-details">
+                                    <div class="activity-title">Último intento</div>
+                                    <div class="activity-time" id="lastAttemptTime">Sin intentos recientes</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+
+    </div>
+    <script type="module" src="src/js/firebase-init.js"></script>
+    <script type="module" src="src/js/dashboard.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+
+</html>
