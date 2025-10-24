@@ -31,5 +31,5 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Token de API de Cloudflare
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }} # ID de tu cuenta de Cloudflare
           projectName: java-tutor-dash # Nombre exacto de tu proyecto en Cloudflare Pages
-          directory: . # Directorio raíz del proyecto a desplegar
+          directory: ./ # Directorio raíz del proyecto a desplegar
           branch: main # Indica que este despliegue es para la rama de producción 'main'
