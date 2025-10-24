@@ -35,6 +35,13 @@ jobs:
           else
             echo "CLOUDFLARE_ACCOUNT_ID seems available (length check)."
           fi
+          # --- V ESTA ES LA LÍNEA QUE FALTA V ---
+          if [[ -z "${{ secrets.FIREBASE_API_KEY }}" ]]; then
+            echo "FIREBASE_API_KEY is NOT available!"
+          else
+            echo "FIREBASE_API_KEY seems available."
+          fi
+          # --- ^ ESTA ES LA LÍNEA QUE FALTA ^ ---
     
       - name: 3. Deploy to Cloudflare (Preview)
         uses: cloudflare/pages-action@v1 
