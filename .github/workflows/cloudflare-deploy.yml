@@ -1,0 +1,35 @@
+name: Deploy Main to Cloudflare Pages
+
+# Disparador: Se activa cuando se cierra un Pull Request que fue fusionado (merged) a la rama 'main'
+on:
+  pull_request:
+    types: [closed]
+    branches: [ main ]
+
+jobs:
+  # Trabajo único: Desplegar a producción
+  deploy_production:
+    # Condición: Solo ejecutar si el PR fue realmente fusionado
+    if: github.event.pull_request.merged == true
+    
+    runs-on: ubuntu-latest
+    name: Deploy Production to Cloudflare Pages
+    steps:
+      # Paso 1: Obtener el código del repositorio
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      # Paso 2: Crear el archivo de configuración de Firebase usando secrets
+      - name: Create firebase-config.js
+        run: |
+          echo "export const firebaseConfig = { apiKey: \"${{ secrets.FIREBASE_API_KEY }}\", authDomain: \"${{ secrets.FIREBASE_AUTH_DOMAIN }}\", projectId: \"${{ secrets.FIREBASE_PROJECT_ID }}\", storageBucket: \"${{ secrets.FIREBASE_STORAGE_BUCKET }}\", messagingSenderId: \"${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}\", appId: \"${{ secrets.FIREBASE_APP_ID }}\" };" > src/js/firebase-config.js
+
+      # Paso 3: Desplegar a Cloudflare Pages usando la acción oficial
+      - name: Deploy to Cloudflare Pages (Production)
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }} # Token de API de Cloudflare
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }} # ID de tu cuenta de Cloudflare
+          projectName: java-tutor-dash # Nombre exacto de tu proyecto en Cloudflare Pages
+          directory: . # Directorio raíz del proyecto a desplegar
+          branch: main # Indica que este despliegue es para la rama de producción 'main'

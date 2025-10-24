@@ -1,0 +1,460 @@
+/* Reset & Base */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body, html {
+    height: 100%;
+    width: 100%;
+    background: #000;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    overflow: hidden;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 1. Contenedor Hero (Pantalla Completa) */
+.hero-container {
+    height: 100vh;
+    width: 100vw;
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-image: url(../assets/one.jpg);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+}
+
+/* 2. Capa de Oscuridad Mejorada (gradiente más suave) */
+.hero-overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(180deg, 
+        rgba(0, 0, 0, 0.7) 0%, 
+        rgba(0, 0, 0, 0.4) 50%,
+        rgba(0, 0, 0, 0.8) 100%);
+    z-index: 1;
+}
+
+/* Efecto de vignette sutil */
+.hero-overlay::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(0, 0, 0, 0.3) 100%);
+    pointer-events: none;
+}
+
+/* 3. Navegación Superior Mejorada */
+.hero-nav {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 40px 60px;
+    backdrop-filter: blur(10px);
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.2) 0%, transparent 100%);
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    text-decoration: none;
+    color: #fff;
+    font-size: 22px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    transition: all 0.3s ease;
+}
+
+.logo:hover {
+    transform: translateY(-2px);
+}
+
+.logo-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+    transition: all 0.3s ease;
+}
+
+.logo:hover .logo-icon {
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.5);
+}
+
+/* 4. Contenido Principal Mejorado */
+.hero-content {
+    position: absolute;
+    bottom: 80px;
+    right: 60px;
+    z-index: 2;
+    width: 100%;
+    max-width: 580px;
+    text-align: right;
+}
+
+.hero-content h1 {
+    font-size: 72px;
+    font-weight: 800;
+    line-height: 1.05;
+    color: #fff;
+    margin-bottom: 28px;
+    letter-spacing: -2px;
+    text-shadow: 0 2px 20px rgba(0, 0, 0, 0.3);
+}
+
+.hero-content h1 span {
+    display: block;
+    background: linear-gradient(135deg, #fff 0%, #e0e0e0 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Línea divisora mejorada con efecto glow */
+.title-divider {
+    height: 5px;
+    width: 120px;
+    background: linear-gradient(90deg, #7c3aed 0%, #a78bfa 100%);
+    margin-left: auto;
+    margin-bottom: 28px;
+    border-radius: 10px;
+    box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { 
+        box-shadow: 0 0 20px rgba(124, 58, 237, 0.6);
+        opacity: 1;
+    }
+    50% { 
+        box-shadow: 0 0 30px rgba(124, 58, 237, 0.9);
+        opacity: 0.9;
+    }
+}
+
+.hero-content p {
+    font-size: 19px;
+    color: #d1d5db;
+    line-height: 1.7;
+    margin-bottom: 36px;
+    font-weight: 400;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* 5. Botones Mejorados con Efectos Premium */
+.btn {
+    display: inline-block;
+    padding: 16px 32px;
+    font-size: 16px;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 12px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+    letter-spacing: 0.3px;
+}
+
+/* Efecto de brillo en hover */
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Botón Primario Mejorado */
+.btn-primary {
+    background: linear-gradient(135deg, #ffffff 0%, #f3f4f6 100%);
+    color: #000;
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.2);
+    position: relative;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(255, 255, 255, 0.3);
+}
+
+.btn-primary:active {
+    transform: translateY(-1px);
+}
+
+/* Botón Secundario Mejorado */
+.btn-secondary {
+    background: rgba(255, 255, 255, 0.05);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.3);
+    backdrop-filter: blur(10px);
+}
+
+.btn-secondary:hover {
+    background: rgba(255, 255, 255, 0.15);
+    border-color: rgba(255, 255, 255, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(255, 255, 255, 0.1);
+}
+
+/* 6. Animaciones de Entrada Mejoradas */
+.logo,
+.hero-nav .btn-secondary,
+.hero-content h1,
+.title-divider,
+.hero-content p,
+#hero-button .btn-primary {
+    opacity: 0;
+    transform: translateY(20px);
+    transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.logo.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.1s;
+}
+
+.hero-nav .btn-secondary.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.2s;
+}
+
+.hero-content h1.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.3s;
+}
+
+.title-divider.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.5s;
+}
+
+.hero-content p.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.7s;
+}
+
+#hero-button .btn-primary.visible {
+    opacity: 1;
+    transform: translateY(0);
+    transition-delay: 0.9s;
+}
+
+/* Decoración adicional - Efecto de partículas (opcional) */
+.hero-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(124, 58, 237, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(167, 139, 250, 0.1) 0%, transparent 50%);
+    z-index: 1;
+    pointer-events: none;
+}
+
+/* ================================
+   RESPONSIVE DESIGN MEJORADO
+================================ */
+
+/* --- Tablet (Pantallas medianas) --- */
+@media (max-width: 768px) {
+    .hero-nav {
+        padding: 35px 40px;
+    }
+
+    .hero-content {
+        bottom: auto;
+        right: auto;
+        left: 50%;
+        top: 52%;
+        transform: translate(-50%, -50%);
+        width: 88%;
+        max-width: 600px;
+        text-align: center;
+    }
+
+    .hero-content h1 {
+        font-size: 60px;
+        letter-spacing: -1.5px;
+    }
+
+    .title-divider {
+        margin-left: auto;
+        margin-right: auto;
+        width: 100px;
+    }
+
+    .hero-content p {
+        font-size: 17px;
+        max-width: 480px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* --- Móvil (Pantallas pequeñas) --- */
+@media (max-width: 480px) {
+    body, html {
+        overflow-y: auto;
+    }
+
+    .hero-container {
+        min-height: 100vh;
+        height: auto;
+        background-attachment: scroll;
+    }
+
+    .hero-nav {
+        padding: 24px;
+        backdrop-filter: blur(20px);
+        background: rgba(0, 0, 0, 0.3);
+    }
+
+    .logo {
+        font-size: 19px;
+        gap: 12px;
+    }
+
+    .logo-icon {
+        width: 32px;
+        height: 32px;
+    }
+
+    .hero-nav .btn-secondary {
+        padding: 12px 24px;
+        font-size: 14px;
+    }
+
+    .hero-content {
+        top: 50%;
+        transform: translate(-50%, -50%);
+        width: 88%;
+        padding: 30px 0;
+    }
+
+    .hero-content h1 {
+        font-size: 40px;
+        margin-bottom: 20px;
+        line-height: 1.15;
+        letter-spacing: -1px;
+    }
+
+    .title-divider {
+        width: 80px;
+        height: 4px;
+        margin-bottom: 20px;
+    }
+
+    .hero-content p {
+        font-size: 15px;
+        line-height: 1.6;
+        margin-bottom: 28px;
+    }
+
+    #hero-button .btn-primary {
+        display: block;
+        width: 100%;
+        max-width: 320px;
+        margin: 0 auto;
+        padding: 18px 28px;
+        font-size: 16px;
+    }
+}
+
+/* --- Móvil Extra Pequeño --- */
+@media (max-width: 360px) {
+    .hero-nav {
+        padding: 20px;
+    }
+
+    .hero-content {
+        width: 92%;
+    }
+
+    .hero-content h1 {
+        font-size: 36px;
+        margin-bottom: 18px;
+    }
+
+    .title-divider {
+        width: 70px;
+        margin-bottom: 18px;
+    }
+
+    .hero-content p {
+        font-size: 14px;
+        margin-bottom: 24px;
+    }
+
+    #hero-button .btn-primary {
+        padding: 16px 24px;
+        font-size: 15px;
+        max-width: 280px;
+    }
+}
+
+/* --- Desktop Grande (mejoras adicionales) --- */
+@media (min-width: 1440px) {
+    .hero-nav {
+        padding: 50px 80px;
+    }
+
+    .hero-content {
+        bottom: 100px;
+        right: 80px;
+        max-width: 650px;
+    }
+
+    .hero-content h1 {
+        font-size: 84px;
+        margin-bottom: 32px;
+    }
+
+    .title-divider {
+        width: 140px;
+        height: 6px;
+    }
+
+    .hero-content p {
+        font-size: 21px;
+        margin-bottom: 40px;
+    }
+
+    .btn-primary {
+        padding: 18px 36px;
+        font-size: 17px;
+    }
+}
