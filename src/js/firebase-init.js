@@ -1,5 +1,3 @@
-// Este archivo ES SEGURO para subir a GitHub.
-
 // 1. Importa la configuración desde tu archivo secreto (que Git ignora)
 import { firebaseConfig } from './firebase-config.js';
 

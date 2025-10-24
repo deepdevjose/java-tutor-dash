@@ -1,4 +1,4 @@
-// --- 1. Importar herramientas de Firebase (Auth y Firestore) ---
+// import firebase auth and firestore modules
 import { auth, db } from './firebase-init.js';
 import { signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { collection, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
@@ -216,7 +216,6 @@ document.addEventListener('DOMContentLoaded', () => {
  * Muestra una alerta de éxito o error dentro del formulario.
  */
 function showAlert(type, message, formElement) {
-    // ... (código sin cambios)
     const existingAlert = formElement.querySelector('.alert-message');
     if (existingAlert) {
         existingAlert.remove();
