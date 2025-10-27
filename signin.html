@@ -46,6 +46,10 @@
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
                                 </button>
+
+                                <div class="forgot-password-link">
+                                    <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
+                                </div>
                             </div>
                         </div>
                         <br>
@@ -63,8 +67,39 @@
             </div>
         </div>
     </div>
+
+
+    <div class="modal-overlay" id="resetPasswordModal">
+        <div class="modal-content">
+            <button class="modal-close-btn" id="closeModalBtn">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+
+            <h3>Restablecer Contraseña</h3>
+            <p class="subtitle" style="margin-bottom: 25px;">Ingresa tu correo electrónico y te enviaremos un enlace
+                para restablecer tu contraseña.</p>
+
+            <div class="form-group">
+                <label for="resetEmail">Correo electrónico</label>
+                <input type="email" id="resetEmail" placeholder="ej. tu-correo@gmail.com" required>
+            </div>
+
+            <div id="modalAlertContainer"></div>
+
+            <button class="submit-btn" id="sendResetEmailBtn">Enviar Enlace</button>
+
+        </div>
+    </div>
     <script type="module" src="src/js/firebase-init.js"></script>
     <script type="module" src="src/js/signin.js"></script>
+</body>
+
+</html>
+<script type="module" src="src/js/firebase-init.js"></script>
+<script type="module" src="src/js/signin.js"></script>
 </body>
 
 </html>

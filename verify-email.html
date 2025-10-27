@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifica tu Correo - Java Tutor</title>
+    <link rel="stylesheet" href="src/css/signin.css">
+    <link rel="stylesheet" href="src/css/verify-email.css">
+</head>
+
+<body>
+    <div class="container">
+        <div class="left-side">
+            <div class="welcome-content">
+                <div class="logo">
+                    <span>Java Tutor</span>
+                </div>
+                <h1>¡Casi Listo!</h1>
+                <p>Solo un paso más para activar tu cuenta.</p>
+            </div>
+        </div>
+
+        <div class="right-side">
+            <div class="form-container verification-box">
+                <div class="icon-container">
+                    <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5">
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                </div>
+                <h2>Verifica tu Correo Electrónico</h2>
+                <p class="subtitle" id="verificationMessage">
+                    Hemos enviado un enlace de verificación a <strong id="userEmail">tu correo</strong>. Por favor,
+                    revisa tu bandeja de entrada (y la carpeta de spam) y haz clic en el enlace para activar tu cuenta.
+                </p>
+
+                <div class="actions">
+                    <button id="resendEmailBtn" class="submit-btn btn-secondary">Reenviar Correo</button>
+                    <a href="signin.html" class="logout-link" id="logoutBtn">Cerrar sesión e ir a Login</a>
+                </div>
+
+                <p class="info-text">
+                    Una vez verificado, serás redirigido automáticamente al dashboard.
+                </p>
+                <div id="loadingSpinner" class="spinner" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="src/js/firebase-init.js"></script>
+    <script type="module" src="src/js/verify-email.js"></script>
+</body>
+
+</html>
