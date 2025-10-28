@@ -6,7 +6,7 @@ import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.4.0/fireb
 /**
  * @file dashboard.js
  * Lógica principal para la página del dashboard.
- * Integrado con Firebase Auth y Firestore, incluye cierre de sesión por inactividad.
+ * Integrado con Firebase Auth y Firestore, incluye cierre de sesión por inactividad y verificación de correo.
  */
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -15,8 +15,22 @@ document.addEventListener('DOMContentLoaded', () => {
         if (user) {
             // --- USUARIO AUTENTICADO ---
             console.log('Usuario autenticado:', user.uid);
-            loadDashboardData(user.uid);
-            startInactivityMonitoring(); // <--- INICIAR MONITOREO DE INACTIVIDAD
+
+            // --- ¡COMPROBACIÓN DE CORREO VERIFICADO ACTUALIZADA AQUÍ! ---
+            if (user.emailVerified) {
+                // SI está verificado -> Cargar Dashboard
+                console.log('Correo verificado. Cargando dashboard...');
+                loadDashboardData(user.uid);
+                startInactivityMonitoring();
+            } else {
+                // NO está verificado -> Redirigir a página de verificación
+                console.warn('Correo NO verificado. Redirigiendo a verify-email.html...');
+                // Opcional: Mostrar un mensaje antes de redirigir
+                // alert("Tu correo electrónico aún no ha sido verificado. Serás redirigido para verificarlo.");
+                window.location.href = 'verify-email.html'; // Lo mandamos a verificar
+            }
+            // --- FIN COMPROBACIÓN ---
+
         } else {
             // --- USUARIO NO AUTENTICADO ---
             console.log('Usuario no autenticado. Redirigiendo a signin...');
@@ -44,7 +58,7 @@ function loadDashboardData(uid) {
             // Actualizar UI
             loadUserData(userData);
             const stats = {
-                testsPassed: userData.testsPassed || 0, // Usar 0 como default si no existe
+                testsPassed: userData.testsPassed || 0,
                 testsFailed: userData.testsFailed || 0,
                 testsTotal: userData.testsTotal || 0,
                 successRate: userData.successRate || 0,
@@ -58,7 +72,7 @@ function loadDashboardData(uid) {
         } else {
             console.error("Error: No se encontró el documento del usuario en Firestore.");
             alert("Hubo un error al cargar tu perfil. Contacta a soporte.");
-            // signOut(auth); // Descomentar para desloguear si el perfil no existe
+            // signOut(auth);
         }
     }, (error) => {
         console.error("Error al obtener datos de Firestore:", error);
@@ -77,23 +91,15 @@ function setupSidebar() {
     const submenuItems = document.querySelectorAll('.has-submenu');
     const logoutLink = document.querySelector('.logout-link');
 
-    // Función unificada para mostrar/ocultar
     const toggleSidebar = () => {
         const isCurrentlyCollapsed = sidebar.classList.contains('collapsed');
-
-        // Acción principal: Añadir o quitar la clase
         sidebar.classList.toggle('collapsed');
-
-        // Actualizar localStorage (solo relevante para desktop, pero no hace daño)
-        localStorage.setItem('sidebarCollapsed', !isCurrentlyCollapsed); 
+        localStorage.setItem('sidebarCollapsed', !isCurrentlyCollapsed);
     };
 
-    // Listener para Desktop
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', toggleSidebar);
     }
-
-    // Listener para Móvil
     if (mobileSidebarToggle) {
          mobileSidebarToggle.addEventListener('click', toggleSidebar);
     }
@@ -101,13 +107,10 @@ function setupSidebar() {
     // Cargar estado inicial
     const isMobile = window.innerWidth <= 1024;
     const savedStateCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
-
     if (isMobile) {
-        // En móvil, SIEMPRE empezar OCULTO
-        sidebar.classList.add('collapsed');
-        localStorage.setItem('sidebarCollapsed', 'true'); // Sincronizar LS
+        sidebar.classList.add('collapsed'); // Empezar oculto en móvil
+        // No forzar LS en móvil aquí, puede causar conflicto si se redimensiona
     } else {
-        // En desktop, cargar estado guardado
         if (savedStateCollapsed) {
             sidebar.classList.add('collapsed');
         } else {
@@ -115,59 +118,74 @@ function setupSidebar() {
         }
     }
 
-    // Submenús (sin cambios)
-    submenuItems.forEach(item => { /* ... */ });
-    // Logout (sin cambios)
-    if (logoutLink) { /* ... */ }
+    // Submenús
+    submenuItems.forEach(item => {
+        const link = item.querySelector('a');
+        link.addEventListener('click', (e) => {
+            // Solo permitir expansión/colapso de submenú si el sidebar NO está colapsado
+            if (!sidebar.classList.contains('collapsed')) {
+                 e.preventDefault();
+                 item.classList.toggle('submenu-open');
+            } else {
+                 // Si está colapsado Y es móvil, expandir sidebar al clickear submenú
+                 if (isMobile) {
+                    e.preventDefault(); // Evitar navegación
+                    sidebar.classList.remove('collapsed');
+                    localStorage.setItem('sidebarCollapsed', 'false');
+                 }
+                 // En desktop colapsado, los enlaces deberían funcionar (si tienen href)
+            }
+        });
+    });
+
+    // Logout
+    if (logoutLink) {
+        logoutLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            signOut(auth).then(() => {
+                console.log('Usuario cerró sesión manualmente');
+                window.location.href = 'signin.html';
+            }).catch((error) => {
+                console.error('Error al cerrar sesión:', error);
+            });
+        });
+     }
 }
 
+
 /**
- * ACTUALIZADO: Carga datos del perfil (nombre y avatar de GitHub) en la UI.
+ * Carga datos del perfil (nombre y avatar de GitHub) en la UI.
  * @param {object} userData - Datos del documento de Firestore.
  */
-async function loadUserData(userData) { // <-- Añadir 'async' aquí
-    // Cargar Nombre
+async function loadUserData(userData) {
     const fullName = `${userData.firstName || ''} ${userData.apellidoPaterno || ''}`.trim();
     const userNameElement = document.getElementById('userName');
-    if (userNameElement) {
-        userNameElement.textContent = fullName || 'Usuario';
-    }
+    if (userNameElement) userNameElement.textContent = fullName || 'Usuario';
 
-    // Cargar Avatar de GitHub
     const userAvatarElement = document.getElementById('userAvatar');
     const githubUsername = userData.githubUsername;
+    const defaultAvatar = 'https://via.placeholder.com/40'; // URL por defecto
 
     if (userAvatarElement && githubUsername) {
         try {
-            // Hacer la llamada a la API pública de GitHub
             const response = await fetch(`https://api.github.com/users/${githubUsername}`);
-
-            if (!response.ok) {
-                // Si el usuario no existe en GitHub o hay otro error
-                throw new Error(`GitHub API error: ${response.status}`);
-            }
-
+            if (!response.ok) throw new Error(`GitHub API error: ${response.status}`);
             const githubData = await response.json();
-
-            // Actualizar la imagen si obtenemos la URL del avatar
             if (githubData.avatar_url) {
                 userAvatarElement.src = githubData.avatar_url;
                 console.log('Avatar de GitHub cargado:', githubData.avatar_url);
             } else {
-                // Mantener placeholder si no hay avatar_url
-                userAvatarElement.src = 'https://via.placeholder.com/40';
+                 userAvatarElement.src = defaultAvatar;
             }
-
         } catch (error) {
             console.error("Error al obtener avatar de GitHub:", error);
-            // Si falla la API, mantener la imagen de placeholder
-            userAvatarElement.src = 'https://via.placeholder.com/40';
+            userAvatarElement.src = defaultAvatar;
         }
     } else if (userAvatarElement) {
-        // Si no hay githubUsername en Firestore, mantener placeholder
-        userAvatarElement.src = 'https://via.placeholder.com/40';
+        userAvatarElement.src = defaultAvatar;
     }
 }
+
 
 /**
  * Anima las estadísticas en la UI.
@@ -182,22 +200,15 @@ function animateStats(stats) {
     animateCounter('completedExercises', 0, stats.completedExercises, 1500);
 
     const totalExercisesEl = document.getElementById('totalExercises');
-    if (totalExercisesEl) {
-        totalExercisesEl.textContent = stats.totalExercises;
-    }
+    if (totalExercisesEl) totalExercisesEl.textContent = stats.totalExercises;
 
-    // Animar barra de progreso (sin setTimeout innecesario)
     const progressFill = document.getElementById('progressFill');
     if (progressFill) {
-        // Forzar reflow para reiniciar animación si el valor es el mismo
         progressFill.style.width = '0%';
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => { // Doble requestAnimationFrame para asegurar
-                progressFill.style.width = stats.courseProgress + '%';
-            });
-        });
+        requestAnimationFrame(() => { requestAnimationFrame(() => { progressFill.style.width = stats.courseProgress + '%'; }); });
     }
 }
+
 
 /**
  * Anima un número de inicio a fin en un elemento HTML.
@@ -205,79 +216,53 @@ function animateStats(stats) {
 function animateCounter(elementId, start, end, duration, suffix = '') {
     const element = document.getElementById(elementId);
     if (!element) return;
-
-    // Si el valor final es NaN o undefined, mostrar 0 o un guión
     const finalValue = (isNaN(end) || end === undefined) ? 0 : end;
-
     const range = finalValue - start;
-    if (range === 0) {
-        element.textContent = start + suffix;
-        return;
-    }
-
-    const increment = range / (duration / 16); // Apunta a ~60 FPS
-    let current = start;
+    if (range === 0) { element.textContent = start + suffix; return; }
     let startTime = null;
-
     function step(timestamp) {
         if (!startTime) startTime = timestamp;
         const progress = timestamp - startTime;
-        current = start + (range * Math.min(progress / duration, 1)); // Usa progreso basado en tiempo
-
+        const current = start + (range * Math.min(progress / duration, 1));
         element.textContent = Math.floor(current) + suffix;
-
-        if (progress < duration) {
-            requestAnimationFrame(step); // Llama al siguiente frame
-        } else {
-            element.textContent = finalValue + suffix; // Asegurar valor final exacto
-        }
+        if (progress < duration) { requestAnimationFrame(step); }
+        else { element.textContent = finalValue + suffix; }
     }
-    requestAnimationFrame(step); // Inicia la animación
+    requestAnimationFrame(step);
 }
 
 
 /**
  * Actualiza la información del último commit (simulado).
- * @param {object} userData - Datos del usuario.
  */
 function updateLastCommit(userData) {
     const lastCommitDateEl = document.getElementById('lastCommitDate');
     const lastActivityTimeEl = document.getElementById('lastActivityTime');
     const lastAttemptTimeEl = document.getElementById('lastAttemptTime');
     const githubUser = userData.githubUsername || 'usuario';
-
-    // Fecha simulada
     const now = new Date();
-    const simulatedDate = new Date(now - Math.random() * 5 * 60 * 60 * 1000); // Hasta 5 horas atrás
+    const simulatedDate = new Date(now - Math.random() * 5 * 60 * 60 * 1000);
     const formattedDate = formatRelativeTime(simulatedDate);
-
-    if (lastCommitDateEl) {
-        lastCommitDateEl.textContent = `Commit de @${githubUser}`; // Mantenemos esto
-    }
-    if (lastActivityTimeEl) {
-        lastActivityTimeEl.textContent = formattedDate; // Usamos fecha simulada
-    }
+    if (lastCommitDateEl) lastCommitDateEl.textContent = `Commit de @${githubUser}`;
+    if (lastActivityTimeEl) lastActivityTimeEl.textContent = formattedDate;
     if (lastAttemptTimeEl) {
-        // Simular intento un poco después del commit
         const attemptDate = new Date(simulatedDate.getTime() + 15 * 60 * 1000);
         lastAttemptTimeEl.textContent = formatRelativeTime(attemptDate);
     }
 }
 
+
 /**
- * Formatea una fecha a tiempo relativo (ej: "Hace 2 horas").
+ * Formatea una fecha a tiempo relativo.
  */
 function formatRelativeTime(date) {
-    if (!(date instanceof Date) || isNaN(date)) {
-        return "Fecha inválida"; // Manejar fechas inválidas
-    }
+    if (!(date instanceof Date) || isNaN(date)) return "Fecha inválida";
     const now = new Date();
     const diff = now - date;
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
-
     if (seconds < 5) return 'Ahora mismo';
     if (minutes < 1) return `Hace ${seconds} seg.`;
     if (hours < 1) return `Hace ${minutes} min.`;
@@ -292,7 +277,7 @@ const INACTIVITY_TIMEOUT = 20 * 60 * 1000; // 20 minutos
 
 function logoutDueToInactivity() {
     console.log("Cerrando sesión por inactividad...");
-    signOut(auth).then(() => { // Usar la función importada signOut
+    signOut(auth).then(() => {
         alert("Tu sesión ha expirado por inactividad.");
         window.location.href = 'signin.html';
     }).catch((error) => {
@@ -306,13 +291,10 @@ function resetInactivityTimer() {
 }
 
 function startInactivityMonitoring() {
-    const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart', 'click']; // Añadir 'click'
-
-    // Usar 'once: true' y re-agregar listener puede ser más eficiente para algunos eventos
+    const activityEvents = ['mousemove', 'mousedown', 'keypress', 'scroll', 'touchstart', 'click'];
     activityEvents.forEach(event => {
         document.addEventListener(event, resetInactivityTimer, { capture: true, passive: true });
     });
-
     resetInactivityTimer(); // Inicia el temporizador
     console.log("Monitoreo de inactividad iniciado.");
 }
