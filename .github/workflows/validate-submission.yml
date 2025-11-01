@@ -1,0 +1,112 @@
+name: Validate Java Exercise
+
+on:
+  repository_dispatch:
+    types: [validate_submission]
+
+jobs:
+  test-and-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Java 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      
+      - name: Display received payload
+        run: |
+          echo "Submission ID: ${{ github.event.client_payload.submissionId }}"
+          echo "Exercise ID: ${{ github.event.client_payload.exerciseId }}"
+          echo "User ID: ${{ github.event.client_payload.userId }}"
+      
+      - name: Create student code file
+        run: |
+          mkdir -p example/actions-ejemplo/src/main/java/com/javatutor
+          echo "${{ github.event.client_payload.studentCode }}" > example/actions-ejemplo/src/main/java/com/javatutor/App.java
+          cat example/actions-ejemplo/src/main/java/com/javatutor/App.java
+      
+      - name: Run Maven tests
+        id: maven_test
+        continue-on-error: true
+        working-directory: example/actions-ejemplo
+        run: |
+          mvn clean test -B | tee ../../test_output.log
+          exit_code=${PIPESTATUS[0]}
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+      
+      - name: Parse test results
+        id: parse_results
+        run: |
+          if [ -f test_output.log ]; then
+            # Extraer información de tests
+            TESTS_RUN=$(grep -oP 'Tests run: \K\d+' test_output.log | head -1 || echo "0")
+            TESTS_FAILED=$(grep -oP 'Failures: \K\d+' test_output.log | head -1 || echo "0")
+            TESTS_ERRORS=$(grep -oP 'Errors: \K\d+' test_output.log | head -1 || echo "0")
+            
+            TESTS_PASSED=$((TESTS_RUN - TESTS_FAILED - TESTS_ERRORS))
+            
+            echo "tests_run=$TESTS_RUN" >> $GITHUB_OUTPUT
+            echo "tests_passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
+            echo "tests_failed=$TESTS_FAILED" >> $GITHUB_OUTPUT
+            
+            # Determinar status
+            if [ "$TESTS_FAILED" -eq "0" ] && [ "$TESTS_ERRORS" -eq "0" ] && [ "$TESTS_RUN" -gt "0" ]; then
+              echo "status=success" >> $GITHUB_OUTPUT
+            elif [ "$TESTS_RUN" -eq "0" ]; then
+              echo "status=error" >> $GITHUB_OUTPUT
+            else
+              echo "status=failed" >> $GITHUB_OUTPUT
+            fi
+            
+            # Extraer mensaje de error si hay
+            if [ "$TESTS_FAILED" -gt "0" ] || [ "$TESTS_ERRORS" -gt "0" ]; then
+              ERROR_REPORT=$(grep -A 10 "FAILURE" test_output.log || cat test_output.log)
+              ERROR_REPORT="${ERROR_REPORT:0:500}"
+              ERROR_REPORT=$(echo "$ERROR_REPORT" | sed 's/"/\\"/g' | tr '\n' ' ')
+              echo "error_report=$ERROR_REPORT" >> $GITHUB_OUTPUT
+            else
+              echo "error_report=" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "error_report=No se encontró archivo de resultados" >> $GITHUB_OUTPUT
+            echo "tests_run=0" >> $GITHUB_OUTPUT
+            echo "tests_passed=0" >> $GITHUB_OUTPUT
+            echo "tests_failed=0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Report results to Firestore
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          JSON_PAYLOAD=$(cat <<EOF
+          {
+            "fields": {
+              "submissionId": {"stringValue": "${{ github.event.client_payload.submissionId }}"},
+              "userId": {"stringValue": "${{ github.event.client_payload.userId }}"},
+              "exerciseId": {"stringValue": "${{ github.event.client_payload.exerciseId }}"},
+              "status": {"stringValue": "${{ steps.parse_results.outputs.status }}"},
+              "testsRun": {"integerValue": "${{ steps.parse_results.outputs.tests_run }}"},
+              "testsPassed": {"integerValue": "${{ steps.parse_results.outputs.tests_passed }}"},
+              "testsFailed": {"integerValue": "${{ steps.parse_results.outputs.tests_failed }}"},
+              "errorReport": {"stringValue": "${{ steps.parse_results.outputs.error_report }}"},
+              "completedAt": {"timestampValue": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"},
+              "githubRunId": {"stringValue": "${{ github.run_id }}"}
+            }
+          }
+          EOF
+          )
+          
+          echo "Enviando resultados a Firestore..."
+          
+          curl -X POST \
+            "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT_ID/databases/(default)/documents/results" \
+            -H "Content-Type: application/json" \
+            -d "$JSON_PAYLOAD"
+          
+          echo "✅ Resultados enviados a Firestore"
