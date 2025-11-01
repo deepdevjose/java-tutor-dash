@@ -91,6 +91,35 @@ body {
     }
 }
 
+@keyframes skeletonLoading {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes slideInFromRight {
+    from {
+        opacity: 0;
+        transform: translateX(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes bounce {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
 /* Apply animation stagger */
 .widget {
     animation: fadeInUp 0.7s ease-out backwards;
@@ -138,10 +167,12 @@ body {
     justify-content: space-between;
     padding: 26px 22px;
     height: 85px;
+    min-height: 85px; /* Asegurar altura mínima */
     border-bottom: 1px solid var(--border-color);
     background: linear-gradient(180deg, var(--bg-secondary) 0%, var(--bg-color) 100%);
     position: relative; /* Necesario para z-index si se solapa */
     flex-shrink: 0; /* Evita que se encoja */
+    z-index: 10; /* Asegurar que esté encima */
 }
 
 .logo {
@@ -167,6 +198,8 @@ body {
     background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-secondary);
     cursor: pointer; padding: 10px; border-radius: 10px; transition: var(--transition);
     display: flex; align-items: center; justify-content: center;
+    position: relative; /* Asegurar que permanezca en su posición */
+    z-index: 10; /* Asegurar que esté encima de otros elementos */
 }
 .sidebar-toggle:hover {
     color: var(--text-primary); background: rgba(124, 58, 237, 0.1);
@@ -278,8 +311,16 @@ body {
     display: none; /* Forzar ocultación completa */
 }
 
-.sidebar.collapsed .sidebar-toggle { transform: rotate(180deg); }
-.sidebar.collapsed .logo { justify-content: center; }
+/* Botón toggle siempre visible y accesible cuando colapsado */
+.sidebar.collapsed .sidebar-toggle { 
+    transform: rotate(180deg);
+    /* Asegurar que permanezca visible y centrado */
+    opacity: 1;
+    pointer-events: auto;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3); /* Añadir brillo para destacar */
+}
+.sidebar.collapsed .logo { justify-content: center; padding-right: 0; }
+.sidebar.collapsed .sidebar-header { justify-content: center; } /* Centrar el contenido del header */
 .sidebar.collapsed .menu-item a { justify-content: center; padding: 16px; margin: 5px 8px; gap: 0; }
 .sidebar.collapsed .menu-item a i { margin: 0; width: 20px; height: 20px; /* Tamaño fijo iconos colapsado */ }
 
@@ -424,12 +465,308 @@ body {
 
 
 /* ================================
+   SKELETON LOADERS
+================================ */
+.skeleton {
+    background: linear-gradient(
+        90deg,
+        var(--bg-secondary) 0%,
+        var(--border-color) 50%,
+        var(--bg-secondary) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s ease-in-out infinite;
+    border-radius: 8px;
+}
+
+.skeleton-text {
+    height: 20px;
+    margin-bottom: 10px;
+    border-radius: 4px;
+}
+
+.skeleton-text.large {
+    height: 46px;
+    width: 60%;
+}
+
+.skeleton-text.small {
+    height: 14px;
+    width: 40%;
+}
+
+.widget.loading .stat,
+.widget.loading .stat-label,
+.widget.loading .widget-icon i {
+    opacity: 0;
+}
+
+.widget.loading .widget-header::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(
+        90deg,
+        var(--bg-secondary) 0%,
+        var(--border-color) 50%,
+        var(--bg-secondary) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s ease-in-out infinite;
+    border-radius: 12px;
+}
+
+
+/* ================================
+   TOOLTIPS
+================================ */
+.tooltip {
+    position: relative;
+    cursor: help;
+}
+
+.tooltip::before,
+.tooltip::after {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease, transform 0.3s ease;
+    z-index: 1000;
+}
+
+.tooltip::before {
+    content: attr(data-tooltip);
+    bottom: calc(100% + 10px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    padding: 8px 12px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tooltip::after {
+    content: '';
+    bottom: calc(100% + 4px);
+    left: 50%;
+    transform: translateX(-50%) translateY(-5px);
+    border: 6px solid transparent;
+    border-top-color: var(--border-color);
+}
+
+.tooltip:hover::before,
+.tooltip:hover::after {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+}
+
+
+/* ================================
+   EMPTY STATES
+================================ */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    text-align: center;
+    opacity: 0;
+    animation: fadeInUp 0.6s ease-out 0.2s forwards;
+}
+
+.empty-state-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(124, 58, 237, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 20px;
+    animation: bounce 2s ease-in-out infinite;
+}
+
+.empty-state-icon i {
+    width: 40px;
+    height: 40px;
+    color: var(--accent-color);
+}
+
+.empty-state h3 {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 10px;
+}
+
+.empty-state p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    max-width: 300px;
+    line-height: 1.6;
+}
+
+.empty-state-cta {
+    margin-top: 20px;
+    padding: 12px 24px;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.empty-state-cta:hover {
+    background: var(--accent-light);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.4);
+}
+
+
+/* ================================
+   NOTIFICATION BADGE
+================================ */
+.notification-badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    width: 18px;
+    height: 18px;
+    background: var(--danger-color);
+    color: white;
+    border-radius: 50%;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-card);
+    animation: pulse 2s ease-in-out infinite;
+}
+
+
+/* ================================
+   LOADING SPINNER
+================================ */
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loading-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    border-radius: 18px;
+}
+
+
+/* ================================
+   SUCCESS/ERROR TOAST
+================================ */
+.toast {
+    position: fixed;
+    top: 100px;
+    right: 20px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 300px;
+    z-index: 10000;
+    animation: slideInFromRight 0.3s ease-out;
+}
+
+.toast.success {
+    border-left: 4px solid var(--success-color);
+}
+
+.toast.error {
+    border-left: 4px solid var(--danger-color);
+}
+
+.toast.info {
+    border-left: 4px solid var(--info-color);
+}
+
+.toast-icon {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+}
+
+.toast.success .toast-icon { color: var(--success-color); }
+.toast.error .toast-icon { color: var(--danger-color); }
+.toast.info .toast-icon { color: var(--info-color); }
+
+.toast-content {
+    flex-grow: 1;
+}
+
+.toast-title {
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.toast-message {
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.toast-close {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+}
+
+.toast-close:hover {
+    color: var(--text-primary);
+    transform: scale(1.1);
+}
+
+
+/* ================================
    RESPONSIVE + CORRECCIONES
 ================================ */
 
 /* --- Botón de Toggle para Móviles --- */
 .mobile-sidebar-toggle {
-    display: none; /* Oculto por defecto */
+    display: none; /* Oculto por defecto en desktop */
     position: fixed;
     top: 20px;
     left: 20px;
@@ -437,14 +774,45 @@ body {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     color: var(--text-secondary);
-    padding: 10px;
-    border-radius: 10px;
+    padding: 12px;
+    border-radius: 12px;
     cursor: pointer;
     transition: var(--transition);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); /* Sombra para destacar */
+    width: 48px; /* Tamaño fijo */
+    height: 48px; /* Tamaño fijo */
+    align-items: center;
+    justify-content: center;
 }
 .mobile-sidebar-toggle:hover {
     color: var(--text-primary);
     border-color: var(--accent-color);
+    background: rgba(124, 58, 237, 0.1);
+    transform: scale(1.05);
+}
+.mobile-sidebar-toggle i {
+    width: 24px;
+    height: 24px;
+}
+
+/* --- Overlay para Móviles --- */
+.sidebar-overlay {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 999; /* Debajo del sidebar pero encima del contenido */
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    backdrop-filter: blur(4px);
+}
+
+.sidebar-overlay.active {
+    display: block;
+    opacity: 1;
 }
 
 /* --- Ajustes Tablet/Móvil (<= 1024px) --- */
@@ -472,11 +840,17 @@ body {
         display: none; 
     }
 
-    /* Mostrar el nuevo botón hamburguesa */
+    /* Mostrar el nuevo botón hamburguesa - SIEMPRE visible */
     .mobile-sidebar-toggle {
-        display: flex; /* O usar 'block' o 'inline-flex' */
+        display: flex;
         align-items: center;
         justify-content: center;
+    }
+    
+    /* Cuando el sidebar está abierto, el botón sigue visible */
+    .sidebar:not(.collapsed) ~ .main-content .mobile-sidebar-toggle {
+        left: calc(var(--sidebar-width) + 20px); /* Mover a la derecha del sidebar */
+        transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     /* Ajustar contenido principal */

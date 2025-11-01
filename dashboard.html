@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html lang="es">
 
+<!-- Head: Metadata and Resources -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,10 +11,17 @@
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 
+<!-- Dashboard Page Layout -->
+
 <body>
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <div class="dashboard-layout">
 
+        <!-- Sidebar Navigation -->
         <nav class="sidebar">
+            <!-- Sidebar Header: logo and toggle -->
             <div class="sidebar-header">
                 <a href="#" class="logo">
                     <img src="src/assets/icons/main_icon.png" alt="Logo" class="logo-icon">
@@ -23,6 +32,7 @@
                 </button>
             </div>
 
+            <!-- Main Navigation Menu -->
             <ul class="menu-links">
                 <li class="menu-item active">
                     <a href="#">
@@ -50,6 +60,7 @@
                 </li>
             </ul>
 
+            <!-- Sidebar Footer: commit info and user profile -->
             <div class="sidebar-footer">
                 <div class="commit-info">
                     <i data-feather="git-commit"></i>
@@ -59,7 +70,7 @@
                     </div>
                 </div>
                 <div class="user-profile">
-                    <img src="https://via.placeholder.com/40" alt="Avatar" class="user-avatar" id="userAvatar">
+                    <img src="#" alt="Avatar" class="user-avatar" id="userAvatar">
                     <div class="user-details">
                         <span class="user-name" id="userName">DeepDevJose</span>
                         <a href="signin.html" class="logout-link">Cerrar sesión</a>
@@ -67,11 +78,15 @@
                 </div>
             </div>
         </nav>
+
+        <!-- Main Content -->
         <main class="main-content">
+            <!-- Mobile sidebar toggle button -->
             <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
                 <i data-feather="menu"></i>
             </button>
 
+            <!-- Main header: title and actions -->
             <header class="main-header">
                 <h1 id="pageTitle">Reporte de Avances</h1>
                 <div class="header-actions">
@@ -84,8 +99,11 @@
                 </div>
             </header>
 
+            <!-- Main widget container -->
             <div class="content-wrapper">
+                <!-- Widget grid -->
                 <div class="widget-grid">
+                    <!-- Widget: tests passed -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Tests Pasados</h3>
@@ -103,6 +121,7 @@
                         </div>
                     </div>
 
+                    <!-- Widget: tests failed -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Tests Fallados</h3>
@@ -120,6 +139,7 @@
                         </div>
                     </div>
 
+                    <!-- Widget: total tests -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Tests Totales</h3>
@@ -133,6 +153,7 @@
                         </div>
                     </div>
 
+                    <!-- Widget: success rate -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Tasa de Éxito</h3>
@@ -146,6 +167,7 @@
                         </div>
                     </div>
 
+                    <!-- Widget: course progress -->
                     <div class="widget progress-widget">
                         <div class="widget-header">
                             <h3>Progreso Total del Curso</h3>
@@ -163,6 +185,7 @@
                         </div>
                     </div>
 
+                    <!-- Widget: last activity -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Última Actividad</h3>
@@ -195,10 +218,12 @@
             </div>
         </main>
     </div>
+
+    <!-- JS dependencies -->
     <script type="module" src="src/js/firebase-init.js"></script>
     <script type="module" src="src/js/dashboard.js"></script>
     <script>
-        feather.replace(); // Asegúrate que esto se llame después de cargar el contenido
+        feather.replace();
     </script>
 </body>
 

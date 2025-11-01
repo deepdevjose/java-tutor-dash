@@ -2,6 +2,7 @@
 <html lang="es">
 
 <head>
+    <!-- Head: Metadata and Resources -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Java Tutor - Iniciar sesión</title>
@@ -9,8 +10,9 @@
 </head>
 
 <body>
+    <!-- Signin Page Layout -->
     <div class="container">
-        <!-- Welcome Section - Left Side -->
+        <!-- Welcome Section: branding and intro -->
         <div class="left-side">
             <div class="welcome-content">
                 <div class="logo">
@@ -21,14 +23,15 @@
             </div>
         </div>
 
-        <!-- Form Section - Right Side -->
+        <!-- Form Section: login form -->
         <div class="right-side">
-            <!-- Sign In Form -->
             <div class="form-container" id="signupForm">
                 <h2>Que bueno es volver a verte!</h2>
                 <p class="subtitle">Accede a tu cuenta</p>
 
+                <!-- Login Form -->
                 <form id="registerForm">
+                    <!-- User Input Row -->
                     <div class="form-row">
                         <div class="form-group">
                             <label for="email">Correo electrónico, Matrícula o Usuario de GitHub</label>
@@ -41,37 +44,47 @@
                             <div class="password-input">
                                 <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
                                 <button type="button" class="toggle-password">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                    <!-- Password visibility toggle icon -->
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
                                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                         <circle cx="12" cy="12" r="3"></circle>
                                     </svg>
                                 </button>
-
-                                <div class="forgot-password-link">
-                                    <a href="#" id="forgotPasswordLink">¿Olvidaste tu contraseña?</a>
-                                </div>
                             </div>
                         </div>
+
+                        <!-- Forgot password link -->
+                        <div class="forgot-password-container">
+                            <a href="#" id="forgotPasswordLink" class="forgot-password-link">¿Olvidaste tu
+                                contraseña?</a>
+                        </div>
                         <br>
+                        <!-- Keep session checkbox -->
                         <div class="form-check toggle-style">
-                            <input type="checkbox" id="keepLoggedIn" checked>
+                            <input type="checkbox" id="keepLoggedIn">
                             <label for="keepLoggedIn">Mantener sesión iniciada</label>
                         </div>
                         <br>
+                        <!-- Submit Button -->
                         <button type="submit" class="submit-btn">Iniciar sesión</button>
                         <br>
+                        <!-- Switch to signup link -->
                         <p class="switch-form">
                             ¿No tienes una cuenta? <a href="signup.html" id="showSignup">Regístrate</a>
                         </p>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
 
+    <!-- Password Reset Modal -->
     <div class="modal-overlay" id="resetPasswordModal">
         <div class="modal-content">
             <button class="modal-close-btn" id="closeModalBtn">
+                <!-- Close icon -->
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
@@ -82,6 +95,7 @@
             <p class="subtitle" style="margin-bottom: 25px;">Ingresa tu correo electrónico y te enviaremos un enlace
                 para restablecer tu contraseña.</p>
 
+            <!-- Email input for password reset -->
             <div class="form-group">
                 <label for="resetEmail">Correo electrónico</label>
                 <input type="email" id="resetEmail" placeholder="ej. tu-correo@gmail.com" required>
@@ -89,17 +103,14 @@
 
             <div id="modalAlertContainer"></div>
 
+            <!-- Send reset email button -->
             <button class="submit-btn" id="sendResetEmailBtn">Enviar Enlace</button>
 
         </div>
     </div>
+    <!-- Firebase and Signin JS Modules -->
     <script type="module" src="src/js/firebase-init.js"></script>
     <script type="module" src="src/js/signin.js"></script>
-</body>
-
-</html>
-<script type="module" src="src/js/firebase-init.js"></script>
-<script type="module" src="src/js/signin.js"></script>
 </body>
 
 </html>

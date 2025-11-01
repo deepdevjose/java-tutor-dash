@@ -42,10 +42,6 @@ body {
     left: 0;
     right: 0;
     bottom: 0;
-    background: linear-gradient(135deg,
-            rgba(0, 0, 0, 0.7) 0%,
-            rgba(0, 0, 0, 0.5) 50%,
-            rgba(0, 0, 0, 0.8) 100%);
     backdrop-filter: blur(3px);
     -webkit-backdrop-filter: blur(3px);
 }
@@ -55,9 +51,6 @@ body {
     content: '';
     position: absolute;
     inset: 0;
-    background-image:
-        radial-gradient(circle at 25% 25%, rgba(124, 58, 237, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 75% 75%, rgba(167, 139, 250, 0.08) 0%, transparent 50%);
     pointer-events: none;
 }
 
@@ -394,6 +387,18 @@ form {
     color: #666;
 }
 
+/* Estilos para autocompletado - mantiene el tema oscuro */
+.form-group input:-webkit-autofill,
+.form-group input:-webkit-autofill:hover,
+.form-group input:-webkit-autofill:focus,
+.form-group input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 100px rgba(20, 20, 20, 1) inset !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    transition: background-color 5000s ease-in-out 0s;
+    caret-color: rgba(255, 255, 255, 0.9);
+}
+
 .form-group input:focus,
 .form-group select:focus {
     outline: none;
@@ -688,7 +693,8 @@ form {
 
 .icon-container {
     margin-bottom: 25px;
-    color: var(--accent-color); /* Usa tu color de acento */
+    color: var(--accent-color);
+    /* Usa tu color de acento */
 }
 
 .verification-box h2 {
@@ -698,11 +704,13 @@ form {
 .verification-box .subtitle {
     margin-bottom: 30px;
     line-height: 1.6;
-    color: var(--text-secondary); /* Un gris más claro */
+    color: var(--text-secondary);
+    /* Un gris más claro */
 }
 
 .verification-box strong {
-    color: var(--text-primary); /* Resaltar el email */
+    color: var(--text-primary);
+    /* Resaltar el email */
     font-weight: 600;
 }
 
@@ -717,9 +725,12 @@ form {
 
 .actions .submit-btn {
     width: 100%;
-    max-width: 250px; /* Limitar ancho del botón */
-    text-decoration: none; /* Asegurar que no haya subrayado */
-    display: inline-block; /* Para que padding funcione bien */
+    max-width: 250px;
+    /* Limitar ancho del botón */
+    text-decoration: none;
+    /* Asegurar que no haya subrayado */
+    display: inline-block;
+    /* Para que padding funcione bien */
     text-align: center;
 }
 
@@ -737,43 +748,54 @@ form {
 
 .info-text {
     font-size: 13px;
-    color: var(--text-tertiary); /* El gris más oscuro */
+    color: var(--text-tertiary);
+    /* El gris más oscuro */
     margin-top: 20px;
 }
 
 #resendEmailBtn {
     /* Quitamos el fondo y borde por defecto */
     background: none;
-    border: 1px solid transparent; /* Borde invisible */
+    border: 1px solid transparent;
+    /* Borde invisible */
 
     /* Usamos un color de texto menos llamativo (gris secundario) */
-    color: var(--text-secondary); 
-    
-    font-weight: 500; /* Un poco menos grueso que el botón principal */
-    box-shadow: none; /* Quitar sombra si la tuviera */
-    
+    color: var(--text-secondary);
+
+    font-weight: 500;
+    /* Un poco menos grueso que el botón principal */
+    box-shadow: none;
+    /* Quitar sombra si la tuviera */
+
     /* Mantenemos el tamaño y centrado del .actions .submit-btn */
     width: 100%;
     max-width: 250px;
     text-decoration: none;
     display: inline-block;
     text-align: center;
-    padding: 14px 24px; /* Ajustar padding si es necesario */
-    margin-top: 0; /* Quitar margen superior si .actions ya tiene gap */
+    padding: 14px 24px;
+    /* Ajustar padding si es necesario */
+    margin-top: 0;
+    /* Quitar margen superior si .actions ya tiene gap */
 }
 
 /* Efecto Hover: Hacemos que se parezca más al secundario */
 #resendEmailBtn:hover {
-    background: rgba(124, 58, 237, 0.05); /* Fondo muy sutil */
-    color: var(--accent-light); /* Color de acento claro */
-    border-color: rgba(124, 58, 237, 0.3); /* Borde sutil */
-    transform: none; /* Quitar efecto de elevación si no te gusta */
+    background: rgba(124, 58, 237, 0.05);
+    /* Fondo muy sutil */
+    color: var(--accent-light);
+    /* Color de acento claro */
+    border-color: rgba(124, 58, 237, 0.3);
+    /* Borde sutil */
+    transform: none;
+    /* Quitar efecto de elevación si no te gusta */
     box-shadow: none;
 }
 
 /* Estilo cuando está deshabilitado (mientras envía) */
 #resendEmailBtn:disabled {
-    color: var(--text-tertiary); /* Color gris más oscuro */
+    color: var(--text-tertiary);
+    /* Color gris más oscuro */
     cursor: not-allowed;
     background: none;
     border-color: transparent;
@@ -791,7 +813,9 @@ form {
 }
 
 @keyframes spin {
-    to { transform: rotate(360deg); }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 /* Estilos adicionales para el botón secundario si no los tienes ya */

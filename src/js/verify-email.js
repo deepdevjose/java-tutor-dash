@@ -2,6 +2,10 @@
 import { auth } from './firebase-init.js';
 import { onAuthStateChanged, sendEmailVerification, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 
+/**
+ * @file verify-email.js
+ * Lógica para la verificación de correo electrónico y reenvío en la página de verificación.
+ */
 document.addEventListener('DOMContentLoaded', () => {
     const userEmailElement = document.getElementById('userEmail');
     const resendEmailBtn = document.getElementById('resendEmailBtn');
@@ -75,6 +79,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     /**
      * Inicia el chequeo periódico del estado de verificación del usuario.
+     *
+     * @param {import('firebase/auth').User} currentUser - Usuario actual de Firebase Auth.
      */
     function startVerificationCheck(currentUser) {
         // Limpiar intervalo anterior si existe

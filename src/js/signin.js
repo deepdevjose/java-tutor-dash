@@ -1,53 +1,83 @@
 // Importar módulos de Firebase Auth y Firestore
 import { auth, db } from './firebase-init.js';
-// ¡Añadir sendPasswordResetEmail aquí! V
 import { signInWithEmailAndPassword, setPersistence, browserSessionPersistence, browserLocalPersistence, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import { collection, query, where, getDocs, limit } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { doc, getDoc } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 /**
  * @file signin.js
  * Lógica encapsulada para el formulario de inicio de sesión (signin.html), incluyendo modal de restablecimiento.
  */
+
+// --- CONSTANTES ---
+const BUTTON_TEXT = {
+    SIGNIN: 'Iniciar Sesión',
+    SIGNING_IN: 'Iniciando sesión...',
+    RESEND: 'Enviar Enlace',
+    SENDING: 'Enviando...'
+};
+
+const MESSAGES = {
+    EMPTY_IDENTIFIER: 'Ingresa tu correo, matrícula o usuario de GitHub',
+    SHORT_PASSWORD: 'La contraseña debe tener al menos 6 caracteres',
+    NOT_FOUND: 'Correo, matrícula o usuario de GitHub no encontrado.',
+    UNVERIFIED_EMAIL: 'Tu correo electrónico aún no ha sido verificado. Revisa tu bandeja de entrada.',
+    SUCCESS: '¡Inicio de sesión exitoso! Redirigiendo...',
+    INVALID_CREDENTIALS: 'Credenciales incorrectas. Verifica tus datos.',
+    TOO_MANY_REQUESTS: 'Demasiados intentos. Intenta más tarde.',
+    USER_NOT_FOUND: 'No existe una cuenta con este correo electrónico.',
+    WRONG_PASSWORD: 'La contraseña es incorrecta. Inténtalo de nuevo.',
+    INVALID_EMAIL: 'El formato del correo electrónico no es válido.',
+    NETWORK_ERROR: 'Error de conexión. Verifica tu conexión a internet.',
+    GENERIC_ERROR: 'Error al iniciar sesión.'
+};
+
 document.addEventListener('DOMContentLoaded', () => {
 
-    // --- SELECCIÓN DE ELEMENTOS ---
-    const signinForm = document.getElementById('registerForm');
-    if (!signinForm) return;
+    // --- SELECCIÓN DE ELEMENTOS (Centralizado) ---
+    const DOM = {
+        signinForm: document.getElementById('registerForm'),
+        emailInput: document.getElementById('email'),
+        passwordInput: document.getElementById('password'),
+        submitBtn: null, // Se asignará después
+        togglePwdBtns: document.querySelectorAll('.toggle-password'),
+        formInputs: null, // Se asignará después
+        keepLoggedInCheckbox: document.getElementById('keepLoggedIn'),
+        forgotPasswordLink: document.getElementById('forgotPasswordLink'),
+        resetPasswordModal: document.getElementById('resetPasswordModal'),
+        closeModalBtn: document.getElementById('closeModalBtn'),
+        resetEmailInput: document.getElementById('resetEmail'),
+        sendResetEmailBtn: document.getElementById('sendResetEmailBtn'),
+        modalAlertContainer: document.getElementById('modalAlertContainer')
+    };
 
-    const emailInput = document.getElementById('email'); // Campo principal de login (type="text")
-    const passwordInput = document.getElementById('password');
-    const submitBtn = signinForm.querySelector('.submit-btn');
-    const togglePwdBtns = document.querySelectorAll('.toggle-password');
-    const formInputs = Array.from(signinForm.querySelectorAll('input:not([type="checkbox"]), select'));
-    const keepLoggedInCheckbox = document.getElementById('keepLoggedIn');
-    const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+    if (!DOM.signinForm) {
+        console.error('❌ Error crítico: Formulario de signin no encontrado en el DOM');
+        return;
+    }
 
-    // --- Selección de Elementos del Modal ---
-    const resetPasswordModal = document.getElementById('resetPasswordModal');
-    const closeModalBtn = document.getElementById('closeModalBtn');
-    const resetEmailInput = document.getElementById('resetEmail'); // Input DENTRO del modal
-    const sendResetEmailBtn = document.getElementById('sendResetEmailBtn');
-    const modalAlertContainer = document.getElementById('modalAlertContainer');
-    // --- FIN Selección Modal ---
-
+    DOM.submitBtn = DOM.signinForm.querySelector('.submit-btn');
+    DOM.formInputs = Array.from(DOM.signinForm.querySelectorAll('input:not([type="checkbox"]), select'));
 
     // --- LÓGICA DE NEGOCIO Y EVENTOS ---
 
     /**
-     * Handler principal para el envío del formulario de INICIO DE SESIÓN.
+     * Envía el formulario de inicio de sesión, gestiona persistencia, validación y redirección.
+     *
+     * @param {Event} e - Evento submit del formulario.
+     * @returns {Promise<void>}
      */
     const handleFormSubmit = async (e) => {
         e.preventDefault();
-        const loginIdentifier = emailInput.value.trim();
-        const password = passwordInput.value;
+        const loginIdentifier = DOM.emailInput.value.trim();
+        const password = DOM.passwordInput.value;
 
         // Validaciones simples
         if (loginIdentifier.length === 0) {
-            showAlert('error', 'Ingresa tu correo, matrícula o usuario de GitHub', signinForm);
+            showAlert('error', MESSAGES.EMPTY_IDENTIFIER, DOM.signinForm);
             return;
         }
         if (password.length < 6) {
-            showAlert('error', 'La contraseña debe tener al menos 6 caracteres', signinForm);
+            showAlert('error', MESSAGES.SHORT_PASSWORD, DOM.signinForm);
             return;
         }
 
@@ -55,268 +85,447 @@ document.addEventListener('DOMContentLoaded', () => {
 
         try {
             // 1. Establecer la persistencia
-            const persistenceType = keepLoggedInCheckbox && keepLoggedInCheckbox.checked
+            const persistenceType = DOM.keepLoggedInCheckbox && DOM.keepLoggedInCheckbox.checked
                 ? browserLocalPersistence
                 : browserSessionPersistence;
             await setPersistence(auth, persistenceType);
-            console.log(`Persistencia establecida a: ${keepLoggedInCheckbox && keepLoggedInCheckbox.checked ? 'local' : 'session'}`);
+            logDebug(`Persistencia establecida a: ${DOM.keepLoggedInCheckbox && DOM.keepLoggedInCheckbox.checked ? 'local' : 'session'}`);
 
             // 2. Obtener el email real
             const email = await getEmailFromIdentifier(loginIdentifier);
             if (!email) {
-                showAlert('error', 'Correo, matrícula o usuario de GitHub no encontrado.', signinForm);
+                showAlert('error', MESSAGES.NOT_FOUND, DOM.signinForm);
                 setLoading(false);
                 return;
             }
 
             // 3. Iniciar sesión
-            console.log('Usuario encontrado. Iniciando sesión con email:', email);
+            logDebug('Usuario encontrado. Iniciando sesión...');
             const userCredential = await signInWithEmailAndPassword(auth, email, password);
-            console.log('Usuario ha iniciado sesión:', userCredential.user.uid);
+            logDebug('Inicio de sesión exitoso');
 
             // 4. Comprobar verificación de correo
             if (!userCredential.user.emailVerified) {
-                console.warn("Intento de login con correo no verificado:", userCredential.user.email);
-                showAlert('error', 'Tu correo electrónico aún no ha sido verificado. Revisa tu bandeja de entrada.', signinForm);
-                await signOut(auth); // Desloguear
-                console.log("Usuario deslogueado por correo no verificado.");
+                logWarn("Intento de login con correo no verificado");
+                showAlert('error', MESSAGES.UNVERIFIED_EMAIL, DOM.signinForm);
+                await signOut(auth);
+                logDebug("Usuario deslogueado por correo no verificado");
                 setLoading(false);
-                return; // No redirigir
+                return;
             }
 
             // 5. Éxito y redirección
-            showAlert('success', '¡Inicio de sesión exitoso! Redirigiendo...', signinForm);
+            showAlert('success', MESSAGES.SUCCESS, DOM.signinForm);
             setTimeout(() => {
-                window.location.href = 'dashboard.html'; // Asegúrate que el nombre sea correcto
+                window.location.href = 'dashboard.html';
             }, 2000);
 
         } catch (error) {
-            console.error("Error en Sign In:", error.code, error.message);
-            let message = 'Error al iniciar sesión.';
-            if (error.code === 'auth/invalid-credential') {
-                message = 'Credenciales incorrectas. Verifica tus datos.';
-            } else if (error.code === 'auth/too-many-requests') {
-                message = 'Demasiados intentos. Intenta más tarde.';
+            logError("Error en Sign In:", error.code);
+            let message = MESSAGES.GENERIC_ERROR;
+            
+            // Mapeo completo de códigos de error de Firebase Auth
+            switch (error.code) {
+                case 'auth/invalid-credential':
+                    message = MESSAGES.INVALID_CREDENTIALS;
+                    break;
+                case 'auth/user-not-found':
+                    message = MESSAGES.USER_NOT_FOUND;
+                    break;
+                case 'auth/wrong-password':
+                    message = MESSAGES.WRONG_PASSWORD;
+                    break;
+                case 'auth/invalid-email':
+                    message = MESSAGES.INVALID_EMAIL;
+                    break;
+                case 'auth/too-many-requests':
+                    message = MESSAGES.TOO_MANY_REQUESTS;
+                    break;
+                case 'auth/network-request-failed':
+                    message = MESSAGES.NETWORK_ERROR;
+                    break;
+                default:
+                    message = MESSAGES.GENERIC_ERROR;
             }
-            showAlert('error', message, signinForm);
+            
+            showAlert('error', message, DOM.signinForm);
         } finally {
             setLoading(false);
         }
     };
 
     /**
-     * Muestra el modal de restablecer contraseña.
+     * Muestra el modal de restablecimiento de contraseña y precarga el email si está disponible.
      */
     const showResetModal = () => {
-        if (resetPasswordModal) {
-            resetEmailInput.value = emailInput.value.trim(); // Pre-rellenar
-            modalAlertContainer.innerHTML = ''; // Limpiar alertas
-            resetPasswordModal.classList.add('visible');
-            resetEmailInput.focus(); // Poner foco en el input del modal
+        if (DOM.resetPasswordModal && DOM.resetEmailInput) {
+            DOM.resetEmailInput.value = DOM.emailInput.value.trim();
+            DOM.modalAlertContainer.innerHTML = '';
+            DOM.resetPasswordModal.classList.add('visible');
+            DOM.resetEmailInput.focus();
         }
     };
 
     /**
-     * Oculta el modal de restablecer contraseña.
+     * Oculta el modal de restablecimiento de contraseña.
      */
     const hideResetModal = () => {
-        if (resetPasswordModal) {
-            resetPasswordModal.classList.remove('visible');
+        if (DOM.resetPasswordModal) {
+            DOM.resetPasswordModal.classList.remove('visible');
         }
     };
 
     /**
-     * Handler para ENVIAR el correo de restablecimiento desde el modal.
+     * Envía el correo de restablecimiento de contraseña desde el modal.
+     *
+     * @returns {Promise<void>}
      */
     const handleSendResetEmail = async () => {
-        const email = resetEmailInput.value.trim();
+        const email = DOM.resetEmailInput.value.trim();
 
         if (!email) {
             showAlertInModal('error', 'Por favor, ingresa tu correo electrónico.');
-            resetEmailInput.focus();
+            DOM.resetEmailInput.focus();
             return;
         }
-        // Validación simple de formato email (no solo @gmail)
         if (!/\S+@\S+\.\S+/.test(email)) {
-             showAlertInModal('error', 'Ingresa un correo electrónico válido.');
-             resetEmailInput.focus();
-             return;
+            showAlertInModal('error', 'Ingresa un correo electrónico válido.');
+            DOM.resetEmailInput.focus();
+            return;
         }
 
-        sendResetEmailBtn.disabled = true;
-        sendResetEmailBtn.textContent = 'Enviando...';
-        modalAlertContainer.innerHTML = '';
+        DOM.sendResetEmailBtn.disabled = true;
+        DOM.sendResetEmailBtn.textContent = BUTTON_TEXT.SENDING;
+        DOM.modalAlertContainer.innerHTML = '';
 
         try {
             await sendPasswordResetEmail(auth, email);
             showAlertInModal('success', `Correo enviado a ${email}. Revisa tu bandeja de entrada (y spam).`);
-            // setTimeout(hideResetModal, 4000); // Cerrar después de 4 seg
         } catch (error) {
-            console.error("Error al enviar correo de restablecimiento:", error.code, error.message);
-            let message = 'No se pudo enviar el correo.';
-            // Ser vago intencionalmente por seguridad
-            if (error.code === 'auth/user-not-found' || error.code === 'auth/invalid-email') {
-                message = 'Si tu correo está registrado, recibirás un enlace.';
-                showAlertInModal('info', message);
-            } else {
-                 showAlertInModal('error', message);
-            }
+            logError("Error al enviar correo de restablecimiento:", error.code);
+            // No revelamos si el usuario existe (práctica de seguridad)
+            const message = 'Si tu correo está registrado, recibirás un enlace.';
+            showAlertInModal('info', message);
         } finally {
-            sendResetEmailBtn.disabled = false;
-            sendResetEmailBtn.textContent = 'Enviar Enlace';
+            DOM.sendResetEmailBtn.disabled = false;
+            DOM.sendResetEmailBtn.textContent = BUTTON_TEXT.RESEND;
         }
     };
 
     /**
-     * Función auxiliar para mostrar alertas DENTRO del modal.
+     * Muestra una alerta dentro del modal de restablecimiento usando DOM API seguro.
+     *
+     * @param {'success'|'info'|'error'} type - Tipo de alerta.
+     * @param {string} message - Mensaje a mostrar.
      */
     function showAlertInModal(type, message) {
         const alertDiv = document.createElement('div');
         const cssClass = type === 'success' ? 'success' : (type === 'info' ? 'info' : 'error');
-        // Reutilizar clases CSS existentes para .message
-        alertDiv.className = `message ${cssClass} show alert-message`; 
-        // Iconos simples o podrías usar los mismos SVG
-        const icon = type === 'success' ? '✅' : (type === 'info' ? 'ℹ️' : '❌');
-        alertDiv.innerHTML = `<span style="margin-right: 8px;">${icon}</span><span>${message}</span>`;
+        alertDiv.className = `message ${cssClass} show alert-message`;
         
-        modalAlertContainer.innerHTML = ''; // Limpiar previas
-        modalAlertContainer.appendChild(alertDiv);
+        const iconSpan = document.createElement('span');
+        iconSpan.style.marginRight = '8px';
+        const icon = type === 'success' ? '✅' : (type === 'info' ? 'ℹ️' : '❌');
+        iconSpan.textContent = icon;
+        
+        const messageSpan = document.createElement('span');
+        messageSpan.textContent = message;
+        
+        alertDiv.appendChild(iconSpan);
+        alertDiv.appendChild(messageSpan);
+
+        DOM.modalAlertContainer.innerHTML = '';
+        DOM.modalAlertContainer.appendChild(alertDiv);
     }
 
     /**
-     * Busca en Firestore un email basado en un identificador.
+     * Busca en Firestore el email de un usuario a partir de un identificador (email, matrícula o GitHub username).
+     * Usa colecciones de mapeo para garantizar O(1) lookup y unicidad.
+     *
+     * @param {string} identifier - Email, matrícula o username de GitHub.
+     * @returns {Promise<string|null>} Email encontrado o null si no existe.
+     * @throws {Error} Si ocurre un error de permisos en Firestore.
      */
     async function getEmailFromIdentifier(identifier) {
-        // ... (código sin cambios) ...
-        if (validateEmail(identifier)) { return identifier; }
-        if (/^[0-9]+$/.test(identifier)) {
-            const q = query(collection(db, "usuarios"), where("matricula", "==", identifier), limit(1));
-            const snapshot = await getDocs(q);
-            if (!snapshot.empty) return snapshot.docs[0].data().email;
+        try {
+            // Si parece un email válido, usarlo directamente
+            if (validateEmail(identifier)) {
+                logDebug('Identificador es un email válido');
+                return identifier;
+            }
+
+            // Si es solo números, buscar por matrícula en colección de mapeo
+            if (/^[0-9]+$/.test(identifier)) {
+                logDebug('Buscando usuario por matrícula en mapeo...');
+                const matriculaRef = doc(db, 'matriculas', identifier);
+                const matriculaDoc = await getDoc(matriculaRef);
+
+                if (matriculaDoc.exists()) {
+                    const email = matriculaDoc.data().email;
+                    logDebug('Usuario encontrado por matrícula');
+                    return email;
+                }
+                logDebug('No se encontró usuario con esa matrícula');
+                return null;
+            }
+
+            // Si no es email ni matrícula, buscar por username de GitHub en colección de mapeo
+            logDebug('Buscando usuario por GitHub username en mapeo...');
+            const githubRef = doc(db, 'github_usernames', identifier.toLowerCase());
+            const githubDoc = await getDoc(githubRef);
+
+            if (githubDoc.exists()) {
+                const email = githubDoc.data().email;
+                logDebug('Usuario encontrado por GitHub username');
+                return email;
+            }
+            logDebug('No se encontró usuario con ese GitHub username');
+
+            return null;
+        } catch (error) {
+            logError('Error al buscar usuario:', error.code);
+
+            // Si el error es de permisos, dar instrucciones claras
+            if (error.code === 'permission-denied') {
+                logError('Error de permisos en Firestore');
+                logError('Verifica las reglas de seguridad en Firebase Console');
+            }
+
+            return null;
         }
-        const q = query(collection(db, "usuarios"), where("githubUsername", "==", identifier), limit(1));
-        const snapshot = await getDocs(q);
-        if (!snapshot.empty) return snapshot.docs[0].data().email;
-        return null;
     }
 
     /**
      * Controla el estado visual y funcional del botón de submit principal.
+     *
+     * @param {boolean} isLoading - Si está cargando o no.
      */
     const setLoading = (isLoading) => {
-        // ... (código sin cambios) ...
-        if (!submitBtn) return;
-        if (isLoading) { /* ... */ } else { /* ... */ }
+        if (!DOM.submitBtn) return;
+        if (isLoading) {
+            DOM.submitBtn.disabled = true;
+            DOM.submitBtn.textContent = BUTTON_TEXT.SIGNING_IN;
+            DOM.submitBtn.style.opacity = '0.7';
+            DOM.submitBtn.style.cursor = 'not-allowed';
+        } else {
+            DOM.submitBtn.disabled = false;
+            DOM.submitBtn.textContent = BUTTON_TEXT.SIGNIN;
+            DOM.submitBtn.style.opacity = '1';
+            DOM.submitBtn.style.cursor = 'pointer';
+        }
     };
 
     /**
-     * Navegación con Enter en el formulario principal.
+     * Permite navegar entre inputs del formulario usando Enter.
+     *
+     * @param {KeyboardEvent} e - Evento de teclado.
+     * @param {number} currentIndex - Índice del input actual.
      */
     const handleEnterKeyNavigation = (e, currentIndex) => {
-        // ... (código sin cambios) ...
-        if (e.key === 'Enter') { /* ... */ }
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            const nextIndex = currentIndex + 1;
+            if (nextIndex < DOM.formInputs.length) {
+                DOM.formInputs[nextIndex].focus();
+            } else {
+                DOM.signinForm.requestSubmit();
+            }
+        }
     };
 
     /**
-     * Alterna la visibilidad de la contraseña.
+     * Alterna la visibilidad de la contraseña en el input correspondiente usando DOM API seguro.
+     *
+     * @param {MouseEvent} e - Evento click del botón de toggle.
      */
     const togglePasswordVisibility = (e) => {
-        // ... (código sin cambios) ...
-        const btn = e.currentTarget; /* ... */
+        e.preventDefault();
+        e.stopPropagation();
+
+        const btn = e.currentTarget;
+        const passwordInputContainer = btn.closest('.password-input');
+        if (!passwordInputContainer) return;
+
+        const input = passwordInputContainer.querySelector('input[type="password"], input[type="text"]');
+        if (!input) return;
+
+        const isPassword = input.type === 'password';
+        input.type = isPassword ? 'text' : 'password';
+
+        // Crear iconos SVG usando createElementNS (más seguro que innerHTML)
+        btn.innerHTML = ''; // Limpiar contenido
+        const svg = createSVGIcon(isPassword ? 'eye-closed' : 'eye-open');
+        btn.appendChild(svg);
     };
 
+    // --- ASIGNACIÓN DE EVENT LISTENERS ---
+    DOM.signinForm.addEventListener('submit', handleFormSubmit);
 
-    // --- 3. ASIGNACIÓN DE EVENT LISTENERS ---
-    signinForm.addEventListener('submit', handleFormSubmit);
-
-    // Listener para ABRIR el modal
-    if (forgotPasswordLink) {
-        forgotPasswordLink.addEventListener('click', (e) => {
+    if (DOM.forgotPasswordLink) {
+        DOM.forgotPasswordLink.addEventListener('click', (e) => {
             e.preventDefault();
             showResetModal();
         });
     }
 
-    // Listeners para CERRAR el modal
-    if (closeModalBtn) {
-        closeModalBtn.addEventListener('click', hideResetModal);
+    if (DOM.closeModalBtn) {
+        DOM.closeModalBtn.addEventListener('click', hideResetModal);
     }
-    if (resetPasswordModal) {
-        resetPasswordModal.addEventListener('click', (e) => {
-            if (e.target === resetPasswordModal) {
+
+    if (DOM.resetPasswordModal) {
+        DOM.resetPasswordModal.addEventListener('click', (e) => {
+            if (e.target === DOM.resetPasswordModal) {
                 hideResetModal();
             }
         });
     }
 
-    // Listener para ENVIAR desde el modal
-    if (sendResetEmailBtn) {
-        sendResetEmailBtn.addEventListener('click', handleSendResetEmail);
-        resetEmailInput.addEventListener('keypress', (e) => {
+    if (DOM.sendResetEmailBtn && DOM.resetEmailInput) {
+        DOM.sendResetEmailBtn.addEventListener('click', handleSendResetEmail);
+        DOM.resetEmailInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 handleSendResetEmail();
             }
         });
     }
 
-    // Listeners existentes
-    togglePwdBtns.forEach(btn => btn.addEventListener('click', togglePasswordVisibility));
-    formInputs.forEach((input, index) => input.addEventListener('keypress', (e) => handleEnterKeyNavigation(e, index)));
+    DOM.togglePwdBtns.forEach(btn => btn.addEventListener('click', togglePasswordVisibility));
+    DOM.formInputs.forEach((input, index) => input.addEventListener('keypress', (e) => handleEnterKeyNavigation(e, index)));
 
-}); // Fin de 'DOMContentLoaded'
+});
 
+// --- FUNCIONES DE UTILIDAD ---
 
 /**
- * Muestra una alerta de éxito o error ANTES del formulario especificado.
- * @param {'success' | 'error' | 'info'} type - El tipo de alerta
- * @param {string} message - El mensaje a mostrar
- * @param {HTMLElement} formElement - El elemento <form> ANTES del cual se insertará la alerta
+ * Crea un SVG icon de forma segura usando DOM API.
+ *
+ * @param {'eye-open'|'eye-closed'|'success'|'info'|'error'} type - Tipo de icono.
+ * @returns {SVGElement} Elemento SVG.
+ */
+function createSVGIcon(type) {
+    const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    svg.setAttribute('width', '20');
+    svg.setAttribute('height', '20');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+
+    if (type === 'eye-open') {
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z');
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '12');
+        circle.setAttribute('cy', '12');
+        circle.setAttribute('r', '3');
+        svg.appendChild(path);
+        svg.appendChild(circle);
+    } else if (type === 'eye-closed') {
+        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path1.setAttribute('d', 'M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24');
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', '1');
+        line.setAttribute('y1', '1');
+        line.setAttribute('x2', '23');
+        line.setAttribute('y2', '23');
+        svg.appendChild(path1);
+        svg.appendChild(line);
+    }
+
+    return svg;
+}
+
+/**
+ * Muestra una alerta de éxito, info o error antes del formulario especificado usando DOM API seguro.
+ *
+ * @param {'success'|'info'|'error'} type - Tipo de alerta.
+ * @param {string} message - Mensaje a mostrar.
+ * @param {HTMLFormElement} formElement - Formulario donde se muestra la alerta.
  */
 function showAlert(type, message, formElement) {
-    const parentContainer = formElement.parentNode; // Obtener el contenedor padre (ej. .form-container)
-    if (!parentContainer) return; // Salir si no hay padre
+    const parentContainer = formElement.parentNode;
+    if (!parentContainer) return;
 
-    // Remover alertas previas DENTRO DEL CONTENEDOR PADRE
     const existingAlert = parentContainer.querySelector('.alert-message');
     if (existingAlert) {
         existingAlert.remove();
     }
 
-    // Crear el nuevo elemento de alerta
     const alertDiv = document.createElement('div');
     const cssClass = type === 'success' ? 'success' : (type === 'info' ? 'info' : 'error');
-    alertDiv.className = `message ${cssClass} show alert-message`; 
-    alertDiv.style.display = 'block'; 
-    // Quitar margen inferior si prefieres que esté pegado al título
-    // alertDiv.style.marginBottom = '20px'; 
+    alertDiv.className = `message ${cssClass} show alert-message`;
+    alertDiv.style.display = 'block';
     alertDiv.setAttribute('role', 'alert');
 
-    // Iconografía (puedes ajustar o quitar si prefieres)
-    const icon = type === 'success'
-        ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>'
-        : (type === 'info' 
-            ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'
-            : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 8px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>'
-          );
-        
-    alertDiv.innerHTML = `${icon}<span>${message}</span>`;
-    
-    // --- ¡CAMBIO CLAVE AQUÍ! ---
-    // Insertar la alerta ANTES del formulario, en el contenedor padre
-    parentContainer.insertBefore(alertDiv, formElement); 
+    // Crear icono SVG de forma segura
+    const iconContainer = document.createElement('span');
+    iconContainer.style.verticalAlign = 'middle';
+    iconContainer.style.marginRight = '8px';
+    iconContainer.textContent = type === 'success' ? '✅' : (type === 'info' ? 'ℹ️' : '❌');
 
-    // Auto-ocultar (sin cambios)
+    const messageSpan = document.createElement('span');
+    messageSpan.textContent = message;
+
+    alertDiv.appendChild(iconContainer);
+    alertDiv.appendChild(messageSpan);
+    parentContainer.insertBefore(alertDiv, formElement);
+
     setTimeout(() => {
         alertDiv.classList.remove('show');
-        setTimeout(() => alertDiv.remove(), 500); 
+        setTimeout(() => alertDiv.remove(), 500);
     }, 5000);
 }
 
 /**
- * Valida si un string es un correo de @gmail.com (usado por getEmailFromIdentifier).
+ * Valida si un string es un correo electrónico válido.
+ *
+ * @param {string} email - Email a validar.
+ * @returns {boolean} True si el email es válido, false si no.
  */
 function validateEmail(email) {
-    // ... (código sin cambios) ...
-    const gmailRegex = /^[a-zA-Z0-9.+_-]+@gmail\.com$/;
-    return gmailRegex.test(String(email).toLowerCase());
+    const emailRegex = /^[a-zA-Z0-9.+_-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return emailRegex.test(String(email).toLowerCase());
+}
+
+// --- LOGGING UTILITIES (Centralizadas para control en producción) ---
+
+/**
+ * Log de debug (solo en desarrollo).
+ * @param {...any} args - Argumentos a loguear.
+ */
+function logDebug(...args) {
+    if (isDevelopment()) {
+        console.log('✅', ...args);
+    }
+}
+
+/**
+ * Log de warning.
+ * @param {...any} args - Argumentos a loguear.
+ */
+function logWarn(...args) {
+    if (isDevelopment()) {
+        console.warn('⚠️', ...args);
+    }
+}
+
+/**
+ * Log de error (siempre visible pero sin detalles sensibles en producción).
+ * @param {...any} args - Argumentos a loguear.
+ */
+function logError(...args) {
+    if (isDevelopment()) {
+        console.error('❌', ...args);
+    } else {
+        // En producción, loguear solo mensajes genéricos
+        console.error('Error occurred');
+    }
+}
+
+/**
+ * Verifica si estamos en modo desarrollo.
+ * @returns {boolean} True si es desarrollo.
+ */
+function isDevelopment() {
+    return window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 }
