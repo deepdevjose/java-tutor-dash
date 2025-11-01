@@ -90,10 +90,7 @@
             <header class="main-header">
                 <h1 id="pageTitle">Reporte de Avances</h1>
                 <div class="header-actions">
-                    <button class="action-btn">
-                        <i data-feather="bell"></i>
-                    </button>
-                    <button class="action-btn">
+                    <button class="action-btn" id="helpBtn">
                         <i data-feather="help-circle"></i>
                     </button>
                 </div>
@@ -217,6 +214,66 @@
                 </div>
             </div>
         </main>
+    </div>
+
+    <!-- Help Modal -->
+    <div class="help-modal" id="helpModal">
+        <div class="help-modal-content">
+            <button class="help-modal-close" id="helpModalClose">
+                <i data-feather="x"></i>
+            </button>
+            
+            <div class="help-modal-header">
+                <img src="https://github.com/deepdevjose.png" alt="Jose Manuel Cortes Ceron" class="help-profile-img">
+                <h2>Jose Manuel Cortes Ceron</h2>
+                <p class="help-subtitle">Desarrollador de Java Tutor</p>
+                <p class="help-subtitle" style="font-weight: bold;">Datos de contacto para soporte</p>
+            </div>
+
+            <div class="help-modal-body">
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="mail"></i>
+                        Correo Electrónico
+                    </h3>
+                    <div class="help-info-item">
+                        <span class="help-email">deepdevjose@itsoeh.edu.mx</span>
+                        <button class="copy-email-btn" id="copyEmailBtn" title="Copiar correo">
+                            <i data-feather="copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="message-circle"></i>
+                        WhatsApp
+                    </h3>
+                    <a href="https://wa.me/525560115704" target="_blank" class="help-whatsapp-btn">
+                        <i data-feather="send"></i>
+                        Enviar mensaje
+                    </a>
+                </div>
+
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="github"></i>
+                        GitHub
+                    </h3>
+                    <a href="https://github.com/deepdevjose" target="_blank" class="help-github-link">
+                        @deepdevjose
+                        <i data-feather="external-link"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="help-modal-footer">
+                <p>
+                    <i data-feather="heart"></i>
+                    Made with ❤️ by DeepDevJose to ITICs - ITSOEH
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- JS dependencies -->

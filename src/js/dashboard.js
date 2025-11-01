@@ -895,3 +895,99 @@ function initializeTooltips() {
 document.addEventListener('DOMContentLoaded', () => {
     setTimeout(initializeTooltips, 1000);
 });
+
+
+// --- LÓGICA DEL MODAL DE AYUDA ---
+
+/**
+ * Inicializa el modal de ayuda/soporte.
+ * @returns {void}
+ */
+function initializeHelpModal() {
+    const helpBtn = document.getElementById('helpBtn');
+    const helpModal = document.getElementById('helpModal');
+    const helpModalClose = document.getElementById('helpModalClose');
+    const copyEmailBtn = document.getElementById('copyEmailBtn');
+
+    if (!helpBtn || !helpModal) return;
+
+    // Abrir modal
+    helpBtn.addEventListener('click', () => {
+        helpModal.classList.add('active');
+        document.body.style.overflow = 'hidden'; // Prevenir scroll
+        
+        // Reemplazar iconos de feather en el modal
+        if (typeof feather !== 'undefined') {
+            feather.replace();
+        }
+    });
+
+    // Cerrar modal
+    const closeModal = () => {
+        helpModal.classList.remove('active');
+        document.body.style.overflow = ''; // Restaurar scroll
+    };
+
+    if (helpModalClose) {
+        helpModalClose.addEventListener('click', closeModal);
+    }
+
+    // Cerrar al hacer clic fuera del contenido
+    helpModal.addEventListener('click', (e) => {
+        if (e.target === helpModal) {
+            closeModal();
+        }
+    });
+
+    // Cerrar con tecla ESC
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && helpModal.classList.contains('active')) {
+            closeModal();
+        }
+    });
+
+    // Funcionalidad de copiar email
+    if (copyEmailBtn) {
+        copyEmailBtn.addEventListener('click', async () => {
+            const email = 'deepdevjose@itsoeh.edu.mx';
+            
+            try {
+                await navigator.clipboard.writeText(email);
+                
+                // Cambiar icono temporalmente
+                const icon = copyEmailBtn.querySelector('i');
+                if (icon) {
+                    const originalIcon = icon.getAttribute('data-feather');
+                    icon.setAttribute('data-feather', 'check');
+                    copyEmailBtn.classList.add('copied');
+                    
+                    // Reemplazar solo los iconos del botón
+                    if (typeof feather !== 'undefined') {
+                        feather.replace();
+                    }
+                    
+                    // Restaurar icono después de 2 segundos
+                    setTimeout(() => {
+                        icon.setAttribute('data-feather', originalIcon || 'copy');
+                        copyEmailBtn.classList.remove('copied');
+                        if (typeof feather !== 'undefined') {
+                            feather.replace();
+                        }
+                    }, 2000);
+                }
+                
+                // Mostrar toast
+                showToast('success', 'Copiado', 'Email copiado al portapapeles');
+                
+            } catch (error) {
+                logError('❌ Error al copiar email:', error);
+                showToast('error', 'Error', 'No se pudo copiar el email');
+            }
+        });
+    }
+}
+
+// Inicializar modal de ayuda cuando cargue el DOM
+document.addEventListener('DOMContentLoaded', () => {
+    initializeHelpModal();
+});

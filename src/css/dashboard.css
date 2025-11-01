@@ -911,3 +911,288 @@ body {
         left: 15px;
     }
 }
+
+
+/* ============================================
+   HELP MODAL
+   ============================================ */
+
+.help-modal {
+    display: none; /* Hidden by default */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(8px);
+    z-index: 10000;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.help-modal.active {
+    display: flex;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.help-modal-content {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    max-width: 500px;
+    width: 100%;
+    position: relative;
+    animation: slideUp 0.3s ease-out;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.help-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1;
+}
+
+.help-modal-close:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger-color);
+}
+
+.help-modal-close i {
+    width: 20px;
+    height: 20px;
+}
+
+.help-modal-header {
+    text-align: center;
+    padding: 40px 32px 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.help-profile-img {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 16px;
+    border: 3px solid var(--accent-color);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.help-modal-header h2 {
+    font-size: 24px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 4px;
+}
+
+.help-subtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.help-modal-body {
+    padding: 24px 32px;
+}
+
+.help-section {
+    margin-bottom: 24px;
+}
+
+.help-section:last-child {
+    margin-bottom: 0;
+}
+
+.help-section h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.help-section h3 i {
+    width: 16px;
+    height: 16px;
+}
+
+.help-info-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 12px 16px;
+}
+
+.help-email {
+    font-size: 14px;
+    color: var(--text-primary);
+    word-break: break-all;
+}
+
+.copy-email-btn {
+    background: transparent;
+    border: none;
+    color: var(--accent-color);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 6px;
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.copy-email-btn:hover {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--accent-light);
+}
+
+.copy-email-btn.copied {
+    color: var(--success-color);
+}
+
+.copy-email-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.help-whatsapp-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, #25D366 0%, #128C7E 100%);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.help-whatsapp-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4);
+}
+
+.help-whatsapp-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+.help-github-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    text-decoration: none;
+    border-radius: 8px;
+    font-size: 14px;
+    transition: var(--transition);
+}
+
+.help-github-link:hover {
+    border-color: var(--accent-color);
+    background: rgba(59, 130, 246, 0.05);
+}
+
+.help-github-link i {
+    width: 16px;
+    height: 16px;
+    color: var(--text-secondary);
+}
+
+.help-modal-footer {
+    padding: 16px 32px 32px;
+    text-align: center;
+}
+
+.help-modal-footer p {
+    font-size: 13px;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+}
+
+.help-modal-footer i {
+    width: 16px;
+    height: 16px;
+    color: var(--danger-color);
+}
+
+/* Mobile Responsive */
+@media (max-width: 480px) {
+    .help-modal-content {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .help-modal-header {
+        padding: 32px 24px 20px;
+    }
+
+    .help-profile-img {
+        width: 80px;
+        height: 80px;
+    }
+
+    .help-modal-header h2 {
+        font-size: 20px;
+    }
+
+    .help-modal-body {
+        padding: 20px 24px;
+    }
+
+    .help-modal-footer {
+        padding: 16px 24px 28px;
+    }
+}

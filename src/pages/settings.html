@@ -17,7 +17,7 @@
 <body>
     <!-- Overlay para cerrar sidebar en móvil -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
-    
+
     <div class="dashboard-layout">
 
         <!-- Sidebar Navigation -->
@@ -41,18 +41,7 @@
                         <span class="link-text">Reporte de Avances</span>
                     </a>
                 </li>
-                <li class="menu-item has-submenu">
-                    <a href="#">
-                        <i data-feather="check-square"></i>
-                        <span class="link-text">Tests Ejercicios</span>
-                        <i data-feather="chevron-right" class="submenu-toggle"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li class="submenu-item"><a href="#">Pasados</a></li>
-                        <li class="submenu-item"><a href="#">Fallados</a></li>
-                        <li class="submenu-item"><a href="#">Totales</a></li>
-                    </ul>
-                </li>
+
                 <li class="menu-item active">
                     <a href="settings.html">
                         <i data-feather="settings"></i>
@@ -90,20 +79,12 @@
             <!-- Main header: title and actions -->
             <header class="main-header">
                 <h1 id="pageTitle">Configuración</h1>
-                <div class="header-actions">
-                    <button class="action-btn" id="saveAllBtn">
-                        <i data-feather="save"></i>
-                    </button>
-                    <button class="action-btn">
-                        <i data-feather="help-circle"></i>
-                    </button>
-                </div>
             </header>
 
             <!-- Settings Content -->
             <div class="content-wrapper">
                 <div class="settings-container">
-                    
+
                     <!-- Información Personal -->
                     <section class="settings-section">
                         <div class="section-header">
@@ -120,26 +101,15 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="firstName">Primer Nombre</label>
-                                    <input 
-                                        type="text" 
-                                        id="firstName" 
-                                        name="firstName"
-                                        placeholder="Ej: José"
-                                        required
-                                        autocomplete="given-name"
-                                    >
+                                    <input type="text" id="firstName" name="firstName" placeholder="Ej: José" required
+                                        autocomplete="given-name">
                                     <span class="error-message" id="firstNameError"></span>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="middleName">Segundo Nombre (Opcional)</label>
-                                    <input 
-                                        type="text" 
-                                        id="middleName" 
-                                        name="middleName"
-                                        placeholder="Ej: Luis"
-                                        autocomplete="additional-name"
-                                    >
+                                    <input type="text" id="middleName" name="middleName" placeholder="Ej: Luis"
+                                        autocomplete="additional-name">
                                     <span class="error-message" id="middleNameError"></span>
                                 </div>
                             </div>
@@ -147,27 +117,15 @@
                             <div class="form-row">
                                 <div class="form-group">
                                     <label for="apellidoPaterno">Apellido Paterno</label>
-                                    <input 
-                                        type="text" 
-                                        id="apellidoPaterno" 
-                                        name="apellidoPaterno"
-                                        placeholder="Ej: García"
-                                        required
-                                        autocomplete="family-name"
-                                    >
+                                    <input type="text" id="apellidoPaterno" name="apellidoPaterno"
+                                        placeholder="Ej: García" required autocomplete="family-name">
                                     <span class="error-message" id="apellidoPaternoError"></span>
                                 </div>
 
                                 <div class="form-group">
                                     <label for="apellidoMaterno">Apellido Materno</label>
-                                    <input 
-                                        type="text" 
-                                        id="apellidoMaterno" 
-                                        name="apellidoMaterno"
-                                        placeholder="Ej: Pérez"
-                                        required
-                                        autocomplete="family-name"
-                                    >
+                                    <input type="text" id="apellidoMaterno" name="apellidoMaterno"
+                                        placeholder="Ej: Pérez" required autocomplete="family-name">
                                     <span class="error-message" id="apellidoMaternoError"></span>
                                 </div>
                             </div>
@@ -192,14 +150,8 @@
 
                                 <div class="form-group">
                                     <label for="group">Grupo</label>
-                                    <input 
-                                        type="text" 
-                                        id="group" 
-                                        name="group"
-                                        placeholder="Ej: A, B, C"
-                                        required
-                                        maxlength="2"
-                                    >
+                                    <input type="text" id="group" name="group" placeholder="Ej: A, B, C" required
+                                        maxlength="2">
                                     <span class="error-message" id="groupError"></span>
                                 </div>
                             </div>
@@ -229,13 +181,8 @@
                             <div class="form-group">
                                 <label for="currentPassword">Contraseña Actual</label>
                                 <div class="password-input-wrapper">
-                                    <input 
-                                        type="password" 
-                                        id="currentPassword" 
-                                        name="currentPassword"
-                                        placeholder="Ingresa tu contraseña actual"
-                                        autocomplete="current-password"
-                                    >
+                                    <input type="password" id="currentPassword" name="currentPassword"
+                                        placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
                                     <button type="button" class="toggle-password" data-target="currentPassword">
                                         <i data-feather="eye"></i>
                                     </button>
@@ -246,13 +193,8 @@
                             <div class="form-group">
                                 <label for="newPassword">Nueva Contraseña</label>
                                 <div class="password-input-wrapper">
-                                    <input 
-                                        type="password" 
-                                        id="newPassword" 
-                                        name="newPassword"
-                                        placeholder="Mínimo 8 caracteres"
-                                        autocomplete="new-password"
-                                    >
+                                    <input type="password" id="newPassword" name="newPassword"
+                                        placeholder="Mínimo 8 caracteres" autocomplete="new-password">
                                     <button type="button" class="toggle-password" data-target="newPassword">
                                         <i data-feather="eye"></i>
                                     </button>
@@ -269,13 +211,8 @@
                             <div class="form-group">
                                 <label for="confirmPassword">Confirmar Nueva Contraseña</label>
                                 <div class="password-input-wrapper">
-                                    <input 
-                                        type="password" 
-                                        id="confirmPassword" 
-                                        name="confirmPassword"
-                                        placeholder="Confirma tu nueva contraseña"
-                                        autocomplete="new-password"
-                                    >
+                                    <input type="password" id="confirmPassword" name="confirmPassword"
+                                        placeholder="Confirma tu nueva contraseña" autocomplete="new-password">
                                     <button type="button" class="toggle-password" data-target="confirmPassword">
                                         <i data-feather="eye"></i>
                                     </button>
@@ -308,7 +245,8 @@
                             <div class="danger-item">
                                 <div class="danger-item-info">
                                     <h3>Eliminar Cuenta</h3>
-                                    <p>Una vez eliminada, no podrás recuperar tu cuenta ni tus datos. Esta acción es permanente.</p>
+                                    <p>Una vez eliminada, no podrás recuperar tu cuenta ni tus datos. Esta acción es
+                                        permanente.</p>
                                 </div>
                                 <button type="button" class="btn btn-danger" id="deleteAccountBtn">
                                     <i data-feather="trash-2"></i>
@@ -342,15 +280,11 @@
                     <li>Configuraciones</li>
                 </ul>
                 <p class="warning-text">Esta acción <strong>NO SE PUEDE DESHACER</strong>.</p>
-                
+
                 <div class="form-group">
                     <label for="confirmDeleteInput">Para confirmar, escribe: <strong>ELIMINAR</strong></label>
-                    <input 
-                        type="text" 
-                        id="confirmDeleteInput" 
-                        placeholder="Escribe ELIMINAR en mayúsculas"
-                        autocomplete="off"
-                    >
+                    <input type="text" id="confirmDeleteInput" placeholder="Escribe ELIMINAR en mayúsculas"
+                        autocomplete="off">
                 </div>
             </div>
             <div class="modal-footer">
