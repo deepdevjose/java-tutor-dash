@@ -1,1 +1,9 @@
 src/js/firebase-config.js
+target/
+*.class
+*.jar
+*.war
+*.ear
+.classpath
+.project
+.settings/

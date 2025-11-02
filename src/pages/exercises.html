@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ejercicios - Java Tutor</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/exercises.css">
+</head>
+
+<body>
+    <!-- Sidebar Overlay (Mobile) -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="logo">
+                    <img src="../assets/icons/main_icon.png" alt="Logo" class="logo-icon">
+                    <span class="logo-text">Java Tutor</span>
+                </a>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i data-feather="chevrons-left"></i>
+                </button>
+            </div>
+
+            <!-- Main Navigation Menu -->
+            <ul class="menu-links">
+                <li class="menu-item">
+                    <a href="dashboard.html">
+                        <i data-feather="home"></i>
+                        <span class="link-text">Reporte de Avances</span>
+                    </a>
+                </li>
+                <li class="menu-item active">
+                    <a href="exercises.html">
+                        <i data-feather="code"></i>
+                        <span class="link-text">Ejercicios</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="settings.html">
+                        <i data-feather="settings"></i>
+                        <span class="link-text">Configuración</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Sidebar Footer: commit info and user profile -->
+            <div class="sidebar-footer">
+                <div class="commit-info">
+                    <i data-feather="git-commit"></i>
+                    <div class="commit-details">
+                        <span class="commit-label">Último intento (Commit):</span>
+                        <span class="commit-date" id="lastCommitDate">Aún no hay commits</span>
+                    </div>
+                </div>
+                <div class="user-profile" id="userProfileSection">
+                    <img src="#" alt="Avatar" class="user-avatar" id="userAvatar">
+                    <div class="user-details">
+                        <span class="user-name" id="userName">Usuario</span>
+                        <a href="#" class="logout-link" id="logoutLink">Cerrar sesión</a>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mobile Sidebar Toggle -->
+            <button class="mobile-sidebar-toggle" id="mobileSidebarToggle" aria-label="Abrir menú">
+                <i data-feather="menu"></i>
+            </button>
+
+            <header class="main-header">
+                <h1 id="pageTitle">Ejercicios de Java</h1>
+                <div class="header-actions">
+                    <button class="action-btn" id="helpBtn" aria-label="Ayuda">
+                        <i data-feather="help-circle"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Filters -->
+            <div class="filters-section">
+                <div class="filter-group">
+                    <label for="difficultyFilter">Dificultad:</label>
+                    <select id="difficultyFilter" class="filter-select">
+                        <option value="all">Todas</option>
+                        <option value="easy">Fácil</option>
+                        <option value="medium">Media</option>
+                        <option value="hard">Difícil</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="categoryFilter">Categoría:</label>
+                    <select id="categoryFilter" class="filter-select">
+                        <option value="all">Todas</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="statusFilter">Estado:</label>
+                    <select id="statusFilter" class="filter-select">
+                        <option value="all">Todos</option>
+                        <option value="completed">Completados</option>
+                        <option value="pending">Pendientes</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Exercises Grid -->
+            <div class="exercises-container" id="exercisesContainer">
+                <!-- Skeleton Loaders (se muestran mientras carga) -->
+                <div class="exercise-card skeleton">
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line" style="width: 80%;"></div>
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                </div>
+                <div class="exercise-card skeleton">
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line" style="width: 80%;"></div>
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                </div>
+                <div class="exercise-card skeleton">
+                    <div class="skeleton-line" style="width: 60%;"></div>
+                    <div class="skeleton-line" style="width: 80%;"></div>
+                    <div class="skeleton-line" style="width: 40%;"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Exercise Modal -->
+    <div class="modal" id="exerciseModal">
+        <div class="modal-content exercise-modal-content">
+            <button class="modal-close" id="closeExerciseModal" aria-label="Cerrar">&times;</button>
+
+            <div class="exercise-header">
+                <h2 id="exerciseTitle">Cargando...</h2>
+                <div class="exercise-badges">
+                    <span class="difficulty-badge" id="difficultyBadge"></span>
+                    <span class="points-badge" id="pointsBadge"></span>
+                </div>
+            </div>
+
+            <div class="exercise-description" id="exerciseDescription">
+                Cargando descripción...
+            </div>
+
+            <div class="code-editor-container">
+                <div class="editor-header">
+                    <span><i data-feather="file-text"></i> App.java</span>
+                    <button class="btn-reset" id="resetCodeBtn" aria-label="Restablecer código">
+                        <i data-feather="rotate-ccw"></i>
+                        <span>Restablecer</span>
+                    </button>
+                </div>
+                <textarea id="codeEditor" class="code-editor" spellcheck="false"
+                    placeholder="Escribe tu código aquí..."></textarea>
+            </div>
+
+            <div class="exercise-actions">
+                <button class="btn btn-secondary" id="testCodeBtn">
+                    <i data-feather="play"></i>
+                    <span>Probar Código</span>
+                </button>
+                <button class="btn btn-primary" id="submitCodeBtn">
+                    <i data-feather="check-circle"></i>
+                    <span>Enviar Solución</span>
+                </button>
+            </div>
+
+            <!-- Results Section -->
+            <div class="results-section hidden" id="resultsSection">
+                <h3><i data-feather="clipboard"></i> Resultados de la Validación</h3>
+                <div class="result-summary" id="resultSummary"></div>
+                <div class="result-details" id="resultDetails"></div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="loading-overlay hidden" id="loadingOverlay">
+                <div class="loading-spinner"></div>
+                <p>Validando tu código...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Help Modal (reutilizado del dashboard) -->
+    <div class="help-modal" id="helpModal">
+        <div class="help-modal-content">
+            <button class="help-modal-close" id="helpModalClose">
+                <i data-feather="x"></i>
+            </button>
+
+            <div class="help-modal-header">
+                <img src="https://github.com/deepdevjose.png" alt="Jose Manuel Cortes Ceron" class="help-profile-img">
+                <h2>Jose Manuel Cortes Ceron</h2>
+                <p class="help-subtitle">Desarrollador y creador de Java Tutor</p>
+            </div>
+
+            <div class="help-modal-body">
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="mail"></i>
+                        Correo Electrónico
+                    </h3>
+                    <div class="help-info-item">
+                        <span class="help-email">deepdevjose@itsoeh.edu.mx</span>
+                        <button class="copy-email-btn" id="copyEmailBtn" title="Copiar correo">
+                            <i data-feather="copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="message-circle"></i>
+                        WhatsApp
+                    </h3>
+                    <a href="https://wa.me/525560115704" target="_blank" class="help-whatsapp-btn">
+                        <i data-feather="send"></i>
+                        Enviar mensaje
+                    </a>
+                </div>
+
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="github"></i>
+                        GitHub
+                    </h3>
+                    <a href="https://github.com/deepdevjose" target="_blank" class="help-github-link">
+                        @deepdevjose
+                        <i data-feather="external-link"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="help-modal-footer">
+                <p>
+                    <i data-feather="heart"></i>
+                    Hecho con dedicación para ITSOEH
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script type="module" src="../js/exercises.js"></script>
+</body>
+
+</html>
