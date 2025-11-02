@@ -34,6 +34,11 @@ jobs:
       - name: Create student code file
         run: |
           echo "📝 Creando archivo con código del estudiante..."
+          
+          # Borrar App.java existente para evitar conflictos
+          rm -f example/actions-ejemplo/src/main/java/com/javatutor/App.java
+          
+          # Crear directorio
           mkdir -p example/actions-ejemplo/src/main/java/com/javatutor
           
           # Guardar el código del estudiante
@@ -61,8 +66,8 @@ jobs:
         continue-on-error: true
         working-directory: example/actions-ejemplo
         run: |
-          echo "🧪 Ejecutando compilación y tests de Maven..."
-          mvn clean compile test-compile surefire:test -B 2>&1 | tee test_output.log
+          echo "🧪 Ejecutando tests de Maven..."
+          mvn clean test -B 2>&1 | tee test_output.log
           exit_code=${PIPESTATUS[0]}
           echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
           echo "📄 Moviendo archivo de salida..."
