@@ -35,9 +35,16 @@ jobs:
         run: |
           echo "📝 Creando archivo con código del estudiante..."
           mkdir -p example/actions-ejemplo/src/main/java/com/javatutor
-          echo "${{ github.event.client_payload.studentCode }}" > example/actions-ejemplo/src/main/java/com/javatutor/App.java
+          
+          # Guardar el código del estudiante
+          cat > example/actions-ejemplo/src/main/java/com/javatutor/App.java << 'EOFCODE'
+          ${{ github.event.client_payload.studentCode }}
+          EOFCODE
+          
           echo "✅ Código del estudiante guardado:"
           cat example/actions-ejemplo/src/main/java/com/javatutor/App.java
+          echo "📏 Número de líneas:"
+          wc -l example/actions-ejemplo/src/main/java/com/javatutor/App.java
       
       - name: Run Maven tests
         id: maven_test
