@@ -1,7 +1,7 @@
 // Importar módulos de Firebase Auth y Firestore
 import { auth, db } from './firebase-init.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import { doc, onSnapshot } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 /**
  * @file dashboard.js
@@ -25,6 +25,14 @@ const isDevelopment = () => {
  */
 const logDebug = (...args) => {
     if (isDevelopment()) console.log(...args);
+};
+
+/**
+ * Log de información (solo en desarrollo).
+ * @param {...any} args - Argumentos a loguear
+ */
+const logInfo = (...args) => {
+    if (isDevelopment()) console.info(...args);
 };
 
 /**
@@ -103,22 +111,12 @@ function loadDashboardData(uid) {
             const userData = doc.data();
             logDebug("✅ Datos del usuario cargados desde Firestore");
 
-            // Actualizar UI
+            // Actualizar UI con datos del perfil
             loadUserData(userData);
-            const stats = {
-                testsPassed: userData.testsPassed || 0,
-                testsFailed: userData.testsFailed || 0,
-                testsTotal: userData.testsTotal || 0,
-                successRate: userData.successRate || 0,
-                courseProgress: userData.courseProgress || 0,
-                completedExercises: userData.completedExercises || 0,
-                totalExercises: 50 // O un valor de la BD si lo tienes
-            };
-            
-            // Ocultar loaders y animar stats
-            hideSkeletonLoaders();
-            animateStats(stats);
             updateLastCommit(userData);
+            
+            // Cargar estadísticas de ejercicios desde la colección results
+            loadExerciseStatistics(uid);
             
             // Mostrar toast de bienvenida (solo la primera vez)
             if (!sessionStorage.getItem('welcomeShown')) {
@@ -138,6 +136,138 @@ function loadDashboardData(uid) {
         logError("❌ Error al obtener datos de Firestore:", error.code);
         showUserFriendlyError("Error de conexión. Verifica tu internet y recarga la página.");
     });
+}
+
+
+/**
+ * Carga y monitorea las estadísticas de ejercicios desde la colección results.
+ * Calcula: ejercicios completados, puntos totales, tests pasados, progreso del curso.
+ *
+ * @param {string} uid - UID del usuario autenticado.
+ * @returns {void}
+ */
+async function loadExerciseStatistics(uid) {
+    logInfo("📈 Cargando estadísticas de ejercicios para UID:", uid);
+
+    try {
+        // Listener en tiempo real para results del usuario
+        const resultsQuery = query(
+            collection(db, 'results'),
+            where('userId', '==', uid)
+        );
+
+        onSnapshot(resultsQuery, async (resultsSnapshot) => {
+            logDebug(`✅ ${resultsSnapshot.size} resultados encontrados`);
+
+            // Agrupar resultados por exerciseId y quedarnos solo con el más reciente de cada uno
+            const latestResultsByExercise = new Map();
+            
+            resultsSnapshot.forEach(doc => {
+                const result = doc.data();
+                const exerciseId = result.exerciseId;
+                const completedAt = result.completedAt?.toDate() || new Date(0);
+                
+                // Si no existe o este es más reciente, lo guardamos
+                if (!latestResultsByExercise.has(exerciseId)) {
+                    latestResultsByExercise.set(exerciseId, { ...result, docId: doc.id, completedAt });
+                } else {
+                    const existing = latestResultsByExercise.get(exerciseId);
+                    if (completedAt > existing.completedAt) {
+                        latestResultsByExercise.set(exerciseId, { ...result, docId: doc.id, completedAt });
+                    }
+                }
+            });
+
+            logDebug(`🎯 Ejercicios únicos encontrados: ${latestResultsByExercise.size}`);
+
+            // Calcular estadísticas solo con los últimos intentos
+            const completedExerciseIds = new Set();
+            let totalTestsPassed = 0;
+            let totalTestsFailed = 0;
+
+            latestResultsByExercise.forEach((result, exerciseId) => {
+                logDebug(`📊 Ejercicio ${exerciseId}: status=${result.status}, passed=${result.testsPassed}, failed=${result.testsFailed}`);
+                
+                if (result.status === 'success') {
+                    completedExerciseIds.add(exerciseId);
+                }
+                totalTestsPassed += result.testsPassed || 0;
+                totalTestsFailed += result.testsFailed || 0;
+            });
+
+            const completedCount = completedExerciseIds.size;
+            logDebug(`✅ Ejercicios completados exitosamente: ${completedCount}`);
+
+            // Obtener puntos de los ejercicios completados
+            let totalPoints = 0;
+            if (completedCount > 0) {
+                const exercisesQuery = query(collection(db, 'exercises'));
+                const exercisesSnapshot = await getDocs(exercisesQuery);
+                
+                exercisesSnapshot.forEach(doc => {
+                    const exercise = doc.data();
+                    if (completedExerciseIds.has(doc.id)) {
+                        // Intentar leer el campo points con varios formatos posibles
+                        let points = exercise.points || exercise[' points'] || exercise['"points"'] || 0;
+                        
+                        // Convertir a número si es string
+                        if (typeof points === 'string') {
+                            points = parseInt(points.replace(/['"]/g, ''), 10) || 0;
+                        }
+                        
+                        logDebug(`💎 Ejercicio ${doc.id}: ${points} puntos`);
+                        totalPoints += points;
+                    }
+                });
+            }
+
+            logDebug(`💰 Puntos totales calculados: ${totalPoints}`);
+
+            // Obtener total de ejercicios para calcular progreso
+            const totalExercisesSnapshot = await getDocs(collection(db, 'exercises'));
+            const totalExercises = totalExercisesSnapshot.size;
+
+            // Calcular estadísticas
+            const testsTotal = totalTestsPassed + totalTestsFailed;
+            const successRate = testsTotal > 0 ? Math.round((totalTestsPassed / testsTotal) * 100) : 0;
+            const courseProgress = totalExercises > 0 ? Math.round((completedCount / totalExercises) * 100) : 0;
+
+            const stats = {
+                testsPassed: totalTestsPassed,
+                testsFailed: totalTestsFailed,
+                testsTotal: testsTotal,
+                successRate: successRate,
+                courseProgress: courseProgress,
+                completedExercises: completedCount,
+                totalExercises: totalExercises,
+                totalPoints: totalPoints
+            };
+
+            logDebug("📊 Estadísticas calculadas:", stats);
+
+            // Actualizar UI
+            hideSkeletonLoaders();
+            animateStats(stats);
+
+        }, (error) => {
+            logError("❌ Error al cargar estadísticas:", error);
+            hideSkeletonLoaders();
+            // Mostrar stats vacías si hay error
+            animateStats({
+                testsPassed: 0,
+                testsFailed: 0,
+                testsTotal: 0,
+                successRate: 0,
+                courseProgress: 0,
+                completedExercises: 0,
+                totalExercises: 0
+            });
+        });
+
+    } catch (error) {
+        logError("❌ Error al configurar listener de estadísticas:", error);
+        hideSkeletonLoaders();
+    }
 }
 
 
@@ -396,6 +526,7 @@ function animateStats(stats) {
     animateCounter('testsFailed', 0, stats.testsFailed, 1500);
     animateCounter('testsTotal', 0, stats.testsTotal, 1500);
     animateCounter('successRate', 0, stats.successRate, 2000, '%');
+    animateCounter('totalPoints', 0, stats.totalPoints || 0, 1500);
     animateCounter('courseProgress', 0, stats.courseProgress, 2000, '%');
     animateCounter('completedExercises', 0, stats.completedExercises, 1500);
 

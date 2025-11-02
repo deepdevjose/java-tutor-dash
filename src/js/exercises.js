@@ -38,9 +38,9 @@ const elements = {
     exercisesContainer: document.getElementById('exercisesContainer'),
     
     // Filters
-    difficultyFilter: document.getElementById('difficultyFilter'),
+    difficultyToggle: document.getElementById('difficultyToggle'),
     categoryFilter: document.getElementById('categoryFilter'),
-    statusFilter: document.getElementById('statusFilter'),
+    statusToggle: document.getElementById('statusToggle'),
     
     // Modal
     exerciseModal: document.getElementById('exerciseModal'),
@@ -65,12 +65,16 @@ const elements = {
     sidebarToggle: document.getElementById('sidebarToggle'),
     mobileSidebarToggle: document.getElementById('mobileSidebarToggle'),
     sidebarOverlay: document.getElementById('sidebarOverlay'),
-    logoutLink: document.getElementById('logoutLink'),
     
-    // User profile
+    // User profile in sidebar
     userAvatar: document.getElementById('userAvatar'),
     userName: document.getElementById('userName'),
-    lastCommitDate: document.getElementById('lastCommitDate'),
+    logoutLink: document.getElementById('logoutLink'),
+    
+    // User profile in global header
+    headerUserAvatar: document.getElementById('headerUserAvatar'),
+    headerUserName: document.getElementById('headerUserName'),
+    headerLogoutLink: document.getElementById('headerLogoutLink'),
     
     // Help
     helpBtn: document.getElementById('helpBtn'),
@@ -138,20 +142,36 @@ async function loadUserProfile() {
         if (userDoc.exists()) {
             const userData = userDoc.data();
             
-            // Actualizar nombre
+            // Actualizar nombre en ambos lugares
             const fullName = `${userData.firstName || ''} ${userData.apellidoPaterno || ''}`.trim();
+            
+            // Actualizar en header global
+            if (elements.headerUserName) {
+                elements.headerUserName.textContent = fullName || 'Usuario';
+            }
+            
+            // Actualizar en sidebar
             if (elements.userName) {
                 elements.userName.textContent = fullName || 'Usuario';
             }
             
             // Cargar avatar de GitHub
             const githubUsername = userData.githubUsername;
-            if (githubUsername && elements.userAvatar) {
+            if (githubUsername) {
                 try {
                     const response = await fetch(`https://api.github.com/users/${githubUsername}`);
                     if (response.ok) {
                         const githubData = await response.json();
-                        elements.userAvatar.src = githubData.avatar_url;
+                        
+                        // Actualizar en header global
+                        if (elements.headerUserAvatar) {
+                            elements.headerUserAvatar.src = githubData.avatar_url;
+                        }
+                        
+                        // Actualizar en sidebar
+                        if (elements.userAvatar) {
+                            elements.userAvatar.src = githubData.avatar_url;
+                        }
                     }
                 } catch (error) {
                     console.warn('⚠️ No se pudo cargar avatar de GitHub');
@@ -184,6 +204,16 @@ async function loadExercises() {
             const data = doc.data();
             console.log('📦 Datos del documento:', data);
             
+            // Intentar leer el campo points con varios formatos posibles
+            let points = data.points || data[' points'] || data['"points"'] || 0;
+            
+            // Si es string, limpiar y convertir a número
+            if (typeof points === 'string') {
+                points = parseInt(points.replace(/['"]/g, ''), 10) || 0;
+            }
+            
+            console.log('💎 Puntos del ejercicio:', points);
+            
             // NO filtrar por isActive, cargar todo
             const cleanData = {
                 id: doc.id,
@@ -193,7 +223,7 @@ async function loadExercises() {
                 category: typeof data.category === 'string' ? data.category.replace(/^"|"$/g, '') : data.category,
                 templateCode: typeof data.templateCode === 'string' ? data.templateCode.replace(/^"|"$/g, '') : data.templateCode,
                 testCode: data.testCode,
-                points: data.points,
+                points: points,
                 order: data.order,
                 isActive: data.isActive,
                 tags: data.tags || []
@@ -249,15 +279,77 @@ async function loadUserProgress() {
 }
 
 // ==========================================
+// UPDATE STATS BAR
+// ==========================================
+function updateStatsBar() {
+    const completedCount = allExercises.filter(ex => ex.completed).length;
+    const pendingCount = allExercises.filter(ex => !ex.completed).length;
+    const totalExercises = allExercises.length;
+    const progressPercentage = totalExercises > 0 ? Math.round((completedCount / totalExercises) * 100) : 0;
+    
+    // Calcular puntos ganados
+    const totalPoints = allExercises
+        .filter(ex => ex.completed)
+        .reduce((sum, ex) => {
+            let points = ex.points || 0;
+            // Convertir a número si es string
+            if (typeof points === 'string') {
+                points = parseInt(points.replace(/['"]/g, ''), 10) || 0;
+            }
+            return sum + points;
+        }, 0);
+    
+    // Actualizar DOM
+    const completedCountEl = document.getElementById('completedCount');
+    const pendingCountEl = document.getElementById('pendingCount');
+    const totalPointsEarnedEl = document.getElementById('totalPointsEarned');
+    const progressPercentageEl = document.getElementById('progressPercentage');
+    
+    if (completedCountEl) completedCountEl.textContent = completedCount;
+    if (pendingCountEl) pendingCountEl.textContent = pendingCount;
+    if (totalPointsEarnedEl) totalPointsEarnedEl.textContent = totalPoints;
+    if (progressPercentageEl) progressPercentageEl.textContent = `${progressPercentage}%`;
+    
+    console.log('📊 Stats actualizados:', { completedCount, pendingCount, totalPoints, progressPercentage });
+}
+
+// ==========================================
+// SEARCH FILTER
+// ==========================================
+function filterExercisesBySearch(searchTerm) {
+    const cards = elements.exercisesContainer.querySelectorAll('.exercise-card');
+    
+    cards.forEach(card => {
+        const title = card.querySelector('h3')?.textContent.toLowerCase() || '';
+        const description = card.querySelector('p')?.textContent.toLowerCase() || '';
+        const category = card.querySelector('.category-badge')?.textContent.toLowerCase() || '';
+        
+        const matches = title.includes(searchTerm) || 
+                       description.includes(searchTerm) || 
+                       category.includes(searchTerm);
+        
+        if (matches || searchTerm === '') {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+
+// ==========================================
 // RENDER EXERCISES
 // ==========================================
 function renderExercises() {
     console.log('🎨 Iniciando renderizado de ejercicios');
     console.log('📦 Total ejercicios en allExercises:', allExercises.length);
     
-    const difficultyFilter = elements.difficultyFilter.value;
-    const categoryFilter = elements.categoryFilter.value;
-    const statusFilter = elements.statusFilter.value;
+    // Actualizar barra de estadísticas
+    updateStatsBar();
+    
+    // Obtener valores de los filtros toggle
+    const difficultyFilter = elements.difficultyToggle?.querySelector('.toggle-btn.active')?.dataset.value || 'all';
+    const categoryFilter = elements.categoryFilter?.value || 'all';
+    const statusFilter = elements.statusToggle?.querySelector('.toggle-btn.active')?.dataset.value || 'all';
     
     console.log('🔍 Filtros aplicados:', { difficultyFilter, categoryFilter, statusFilter });
     
@@ -317,7 +409,12 @@ function createExerciseCard(exercise) {
     const description = exercise.description || 'Sin descripción';
     const difficulty = exercise.difficulty || 'medium';
     const category = exercise.category || 'General';
-    const points = exercise.points || 0;
+    
+    // Procesar puntos - asegurar que sea un número
+    let points = exercise.points || 0;
+    if (typeof points === 'string') {
+        points = parseInt(points.replace(/['"]/g, ''), 10) || 0;
+    }
     
     // Truncar descripción
     const shortDescription = description.split('\n')[0].substring(0, 100) + '...';
@@ -332,7 +429,7 @@ function createExerciseCard(exercise) {
             </span>
             <span class="points-badge">
                 <i data-feather="award"></i>
-                ${points} puntos
+                ${points} punto${points !== 1 ? 's' : ''}
             </span>
             <span class="category-badge">
                 <i data-feather="tag"></i>
@@ -355,11 +452,17 @@ function openExercise(exercise) {
     currentExercise = exercise;
     currentSubmissionId = null;
     
+    // Procesar puntos - asegurar que sea un número
+    let points = exercise.points || 0;
+    if (typeof points === 'string') {
+        points = parseInt(points.replace(/['"]/g, ''), 10) || 0;
+    }
+    
     // Llenar modal con datos del ejercicio
     elements.exerciseTitle.textContent = exercise.title;
     elements.difficultyBadge.textContent = getDifficultyText(exercise.difficulty);
     elements.difficultyBadge.className = `difficulty-badge ${exercise.difficulty}`;
-    elements.pointsBadge.textContent = `${exercise.points} puntos`;
+    elements.pointsBadge.textContent = `${points} punto${points !== 1 ? 's' : ''}`;
     elements.exerciseDescription.textContent = exercise.description;
     elements.codeEditor.value = exercise.templateCode;
     
@@ -646,10 +749,73 @@ function showToast(type, title, message) {
 // EVENT LISTENERS
 // ==========================================
 function initializeEventListeners() {
-    // Filters
-    elements.difficultyFilter?.addEventListener('change', renderExercises);
+    // Toggle Filters - Difficulty
+    if (elements.difficultyToggle) {
+        const difficultyButtons = elements.difficultyToggle.querySelectorAll('.toggle-btn');
+        difficultyButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                difficultyButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderExercises();
+            });
+        });
+    }
+    
+    // Toggle Filters - Status
+    if (elements.statusToggle) {
+        const statusButtons = elements.statusToggle.querySelectorAll('.toggle-btn');
+        statusButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                statusButtons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderExercises();
+            });
+        });
+    }
+    
+    // Category Filter (dropdown)
     elements.categoryFilter?.addEventListener('change', renderExercises);
-    elements.statusFilter?.addEventListener('change', renderExercises);
+    
+    // Clear Filters Button
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+            // Reset difficulty toggle
+            if (elements.difficultyToggle) {
+                const difficultyButtons = elements.difficultyToggle.querySelectorAll('.toggle-btn');
+                difficultyButtons.forEach(b => b.classList.remove('active'));
+                difficultyButtons[0]?.classList.add('active'); // Set first (Todas) as active
+            }
+            
+            // Reset category dropdown
+            if (elements.categoryFilter) {
+                elements.categoryFilter.value = 'all';
+            }
+            
+            // Reset status toggle
+            if (elements.statusToggle) {
+                const statusButtons = elements.statusToggle.querySelectorAll('.toggle-btn');
+                statusButtons.forEach(b => b.classList.remove('active'));
+                statusButtons[0]?.classList.add('active'); // Set first (Todos) as active
+            }
+            
+            // Clear search
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = '';
+            
+            renderExercises();
+            showToast('info', 'Filtros limpiados', 'Mostrando todos los ejercicios');
+        });
+    }
+    
+    // Search Input
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput) {
+        searchInput.addEventListener('input', (e) => {
+            const searchTerm = e.target.value.toLowerCase().trim();
+            filterExercisesBySearch(searchTerm);
+        });
+    }
     
     // Modal
     elements.closeExerciseModal?.addEventListener('click', closeExercise);
@@ -662,7 +828,7 @@ function initializeEventListeners() {
     elements.testCodeBtn?.addEventListener('click', testCode);
     elements.submitCodeBtn?.addEventListener('click', submitCode);
     
-    // Sidebar
+    // Sidebar toggles
     elements.sidebarToggle?.addEventListener('click', toggleSidebar);
     elements.mobileSidebarToggle?.addEventListener('click', toggleSidebar);
     elements.sidebarOverlay?.addEventListener('click', () => {
@@ -670,8 +836,19 @@ function initializeEventListeners() {
         elements.sidebarOverlay?.classList.remove('active');
     });
     
-    // Logout
+    // Logout - Sidebar
     elements.logoutLink?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        try {
+            await signOut(auth);
+            window.location.href = '../../index.html';
+        } catch (error) {
+            console.error('Error al cerrar sesión:', error);
+        }
+    });
+    
+    // Logout - Global Header
+    elements.headerLogoutLink?.addEventListener('click', async (e) => {
         e.preventDefault();
         try {
             await signOut(auth);

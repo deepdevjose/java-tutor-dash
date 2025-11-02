@@ -46,18 +46,6 @@
                         <span class="link-text">Ejercicios</span>
                     </a>
                 </li>
-                <li class="menu-item has-submenu">
-                    <a href="#">
-                        <i data-feather="check-square"></i>
-                        <span class="link-text">Tests Ejercicios</span>
-                        <i data-feather="chevron-right" class="submenu-toggle"></i>
-                    </a>
-                    <ul class="submenu">
-                        <li class="submenu-item"><a href="#">Pasados</a></li>
-                        <li class="submenu-item"><a href="#">Fallados</a></li>
-                        <li class="submenu-item"><a href="#">Totales</a></li>
-                    </ul>
-                </li>
                 <li class="menu-item">
                     <a href="settings.html">
                         <i data-feather="settings"></i>
@@ -68,13 +56,6 @@
 
             <!-- Sidebar Footer: commit info and user profile -->
             <div class="sidebar-footer">
-                <div class="commit-info">
-                    <i data-feather="git-commit"></i>
-                    <div class="commit-details">
-                        <span class="commit-label">Último intento (Commit):</span>
-                        <span class="commit-date" id="lastCommitDate">Aún no hay commits</span>
-                    </div>
-                </div>
                 <div class="user-profile">
                     <img src="#" alt="Avatar" class="user-avatar" id="userAvatar">
                     <div class="user-details">
@@ -167,6 +148,20 @@
                         <div class="stat" id="successRate">0%</div>
                         <div class="stat-label">
                             De todos los intentos
+                        </div>
+                    </div>
+
+                    <!-- Widget: total points -->
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3>Puntos Totales</h3>
+                            <div class="widget-icon">
+                                <i data-feather="award"></i>
+                            </div>
+                        </div>
+                        <div class="stat" id="totalPoints">0</div>
+                        <div class="stat-label">
+                            Puntos ganados
                         </div>
                     </div>
 
