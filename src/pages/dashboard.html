@@ -46,6 +46,13 @@
                         <span class="link-text">Ejercicios</span>
                     </a>
                 </li>
+                <!-- Admin Panel Link (only for admins) -->
+                <li class="menu-item admin-only" id="adminMenuItem" style="display: none;">
+                    <a href="admin.html">
+                        <i data-feather="shield"></i>
+                        <span class="link-text">Panel de Admin</span>
+                    </a>
+                </li>
                 <li class="menu-item">
                     <a href="settings.html">
                         <i data-feather="settings"></i>
@@ -209,6 +216,22 @@
                                     <div class="activity-title">Último intento</div>
                                     <div class="activity-time" id="lastAttemptTime">Sin intentos recientes</div>
                                 </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Widget: recent submissions -->
+                    <div class="widget" style="grid-column: span 2;">
+                        <div class="widget-header">
+                            <h3>Envíos Recientes</h3>
+                            <div class="widget-icon">
+                                <i data-feather="clock"></i>
+                            </div>
+                        </div>
+                        <div id="recentSubmissions" class="recent-submissions-list">
+                            <div class="empty-state">
+                                <i data-feather="inbox"></i>
+                                <p>No hay envíos recientes</p>
                             </div>
                         </div>
                     </div>

@@ -1,7 +1,8 @@
 // Importar módulos de Firebase Auth y Firestore
 import { auth, db } from './firebase-init.js';
 import { createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import { doc, setDoc, runTransaction } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { doc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { isAdminEmail, DEFAULT_ADMIN_PERMISSIONS } from './admin-config.js';
 
 /**
  * @file signup.js
@@ -169,7 +170,15 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // 4. Éxito y redirección a verificación
-            showMessage('success', '¡Cuenta creada! Revisa tu correo para verificarla.');
+            const email = emailInput.value.trim();
+            const isAdmin = isAdminEmail(email);
+            
+            if (isAdmin) {
+                showMessage('success', '¡Cuenta de ADMINISTRADOR creada! Revisa tu correo para verificarla. Tendrás acceso al Panel de Admin.');
+            } else {
+                showMessage('success', '¡Cuenta creada! Revisa tu correo para verificarla.');
+            }
+            
             setTimeout(() => {
                 window.location.href = 'verify-email.html';
             }, 3000);
@@ -554,6 +563,23 @@ async function reserveUniqueIdentifiers(uid, githubUsername, matricula, userData
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             });
+
+            // 4. SI ES ADMIN: Crear documento en colección 'admins' automáticamente
+            if (isAdminEmail(userData.email)) {
+                const adminDocRef = doc(db, 'admins', userData.email);
+                transaction.set(adminDocRef, {
+                    email: userData.email,
+                    uid: uid,
+                    githubUsername: githubUsername,
+                    matricula: matricula,
+                    firstName: userData.firstName,
+                    lastName: `${userData.apellidoPaterno || ''} ${userData.apellidoMaterno || ''}`.trim(),
+                    role: 'admin',
+                    createdAt: new Date().toISOString(),
+                    permissions: DEFAULT_ADMIN_PERMISSIONS
+                });
+                logDebug('✅ Usuario detectado como ADMIN - Agregado a colección admins');
+            }
 
             logDebug('✅ Transacción completada: identificadores reservados y usuario creado');
         });

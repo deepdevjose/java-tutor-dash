@@ -24,6 +24,34 @@ jobs:
           echo "Exercise ID: ${{ github.event.client_payload.exerciseId }}"
           echo "User ID: ${{ github.event.client_payload.userId }}"
       
+      - name: Fetch exercise test code from Firestore
+        id: fetch_test
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          echo "📥 Obteniendo código de test desde Firestore..."
+          
+          EXERCISE_RESPONSE=$(curl -s \
+            "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT_ID/databases/(default)/documents/exercises/${{ github.event.client_payload.exerciseId }}")
+          
+          # Extract testCode field from Firestore response
+          TEST_CODE=$(echo "$EXERCISE_RESPONSE" | jq -r '.fields.testCode.stringValue // empty')
+          
+          if [ -z "$TEST_CODE" ]; then
+            echo "❌ No se encontró código de test para este ejercicio"
+            exit 1
+          fi
+          
+          # Create test directory
+          mkdir -p example/actions-ejemplo/src/test/java/com/javatutor
+          
+          # Write test code to AppTest.java
+          echo "$TEST_CODE" > example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java
+          
+          echo "✅ Test descargado y guardado"
+          echo "📄 Contenido del test:"
+          cat example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java
+      
       - name: Verify project structure
         run: |
           echo "📂 Verificando estructura del proyecto..."

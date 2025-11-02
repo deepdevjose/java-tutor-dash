@@ -15,7 +15,11 @@ import {
     doc,
     getDoc,
     updateDoc,
-    deleteDoc
+    deleteDoc,
+    collection,
+    query,
+    where,
+    getDocs
 } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
 
 // ==========================================
@@ -464,7 +468,7 @@ function hideDeleteModal() {
 
 function validateDeleteConfirmation() {
     const inputValue = elements.confirmDeleteInput.value;
-    elements.confirmDeleteBtn.disabled = inputValue !== 'ELIMINAR';
+    elements.confirmDeleteBtn.disabled = inputValue !== 'Adios vaquero!';
 }
 
 async function deleteAccount() {
@@ -472,9 +476,40 @@ async function deleteAccount() {
     if (!user) return;
     
     try {
+        // Primero, pedir al usuario que confirme con su contraseña
+        const password = prompt('Por seguridad, ingresa tu contraseña actual para confirmar la eliminación de la cuenta:');
+        
+        if (!password) {
+            showToast('info', 'Cancelado', 'Eliminación de cuenta cancelada');
+            return;
+        }
+        
         elements.confirmDeleteBtn.disabled = true;
         elements.confirmDeleteBtn.innerHTML = '<i data-feather="loader"></i> Eliminando...';
         if (typeof feather !== 'undefined') feather.replace();
+        
+        // Re-autenticar al usuario antes de eliminar
+        try {
+            const credential = EmailAuthProvider.credential(user.email, password);
+            await reauthenticateWithCredential(user, credential);
+            logDebug('✅ Usuario re-autenticado exitosamente');
+        } catch (reauthError) {
+            logError('Error al re-autenticar:', reauthError);
+            
+            if (reauthError.code === 'auth/wrong-password') {
+                showToast('error', 'Contraseña incorrecta', 'La contraseña ingresada no es correcta');
+            } else if (reauthError.code === 'auth/too-many-requests') {
+                showToast('error', 'Demasiados intentos', 'Has intentado demasiadas veces. Espera un momento e intenta de nuevo');
+            } else {
+                showToast('error', 'Error de autenticación', 'No se pudo verificar tu identidad. Intenta de nuevo');
+            }
+            
+            // Restaurar botón
+            elements.confirmDeleteBtn.disabled = false;
+            elements.confirmDeleteBtn.innerHTML = '<i data-feather="trash-2"></i> Eliminar cuenta';
+            if (typeof feather !== 'undefined') feather.replace();
+            return;
+        }
         
         // 1. PRIMERO: Obtener datos del usuario ANTES de eliminar
         const userDocRef = doc(db, 'usuarios', user.uid);
@@ -489,36 +524,121 @@ async function deleteAccount() {
             matricula = userData.matricula;
         }
         
-        // 2. Eliminar mapping de GitHub username si existe
+        logDebug('🗑️ Iniciando eliminación completa de cuenta...');
+        
+        // 2. Eliminar todos los CODE DRAFTS del usuario
+        try {
+            const draftsRef = collection(db, 'code_drafts');
+            const draftsQuery = query(draftsRef, where('userId', '==', user.uid));
+            const draftsSnapshot = await getDocs(draftsQuery);
+            
+            logDebug(`📝 Encontrados ${draftsSnapshot.size} code drafts para eliminar`);
+            
+            const draftDeletePromises = [];
+            draftsSnapshot.forEach((draftDoc) => {
+                draftDeletePromises.push(deleteDoc(doc(db, 'code_drafts', draftDoc.id)));
+            });
+            
+            await Promise.all(draftDeletePromises);
+            logDebug('✅ Todos los code drafts eliminados');
+        } catch (error) {
+            logDebug('⚠️ Error al eliminar code drafts (puede que no existan):', error.code);
+        }
+        
+        // 3. Eliminar todos los SUBMISSIONS del usuario
+        try {
+            const submissionsRef = collection(db, 'submissions');
+            const submissionsQuery = query(submissionsRef, where('userId', '==', user.uid));
+            const submissionsSnapshot = await getDocs(submissionsQuery);
+            
+            logDebug(`📄 Encontrados ${submissionsSnapshot.size} submissions para eliminar`);
+            
+            const submissionDeletePromises = [];
+            submissionsSnapshot.forEach((submissionDoc) => {
+                submissionDeletePromises.push(deleteDoc(doc(db, 'submissions', submissionDoc.id)));
+            });
+            
+            await Promise.all(submissionDeletePromises);
+            logDebug('✅ Todos los submissions eliminados');
+        } catch (error) {
+            logDebug('⚠️ Error al eliminar submissions:', error.code);
+            if (error.code === 'permission-denied') {
+                throw new Error('No tienes permisos para eliminar tus submissions. Contacta al administrador.');
+            }
+        }
+        
+        // 4. Eliminar todos los RESULTS del usuario
+        try {
+            const resultsRef = collection(db, 'results');
+            const resultsQuery = query(resultsRef, where('userId', '==', user.uid));
+            const resultsSnapshot = await getDocs(resultsQuery);
+            
+            logDebug(`📊 Encontrados ${resultsSnapshot.size} results para eliminar`);
+            
+            const resultsDeletePromises = [];
+            resultsSnapshot.forEach((resultDoc) => {
+                resultsDeletePromises.push(deleteDoc(doc(db, 'results', resultDoc.id)));
+            });
+            
+            await Promise.all(resultsDeletePromises);
+            logDebug('✅ Todos los results eliminados');
+        } catch (error) {
+            logDebug('⚠️ Error al eliminar results:', error.code);
+            if (error.code === 'permission-denied') {
+                throw new Error('No tienes permisos para eliminar tus results. Contacta al administrador.');
+            }
+        }
+        
+        // 5. Eliminar mapping de GitHub username si existe
         if (githubUsername) {
-            await deleteDoc(doc(db, 'github_usernames', githubUsername.toLowerCase()));
-            logDebug('✅ GitHub username mapping eliminado:', githubUsername);
+            try {
+                await deleteDoc(doc(db, 'github_usernames', githubUsername.toLowerCase()));
+                logDebug('✅ GitHub username mapping eliminado:', githubUsername);
+            } catch (error) {
+                logDebug('⚠️ Error al eliminar GitHub mapping:', error.code);
+            }
         }
         
-        // 3. Eliminar mapping de matrícula si existe
+        // 6. Eliminar mapping de matrícula si existe
         if (matricula) {
-            await deleteDoc(doc(db, 'matriculas', matricula));
-            logDebug('✅ Matrícula mapping eliminado:', matricula);
+            try {
+                await deleteDoc(doc(db, 'matriculas', matricula));
+                logDebug('✅ Matrícula mapping eliminado:', matricula);
+            } catch (error) {
+                logDebug('⚠️ Error al eliminar matrícula mapping:', error.code);
+            }
         }
         
-        // 4. Eliminar documento del usuario
+        // 7. Eliminar documento del usuario
         await deleteDoc(userDocRef);
         logDebug('✅ Documento de usuario eliminado');
         
-        // 5. FINALMENTE: Eliminar usuario de Auth
+        // 8. FINALMENTE: Eliminar usuario de Auth
         await deleteUser(user);
         logDebug('✅ Usuario eliminado de Auth');
         
-        logDebug('✅ Cuenta eliminada exitosamente');
+        logDebug('✅ Cuenta eliminada exitosamente - TODO borrado');
         
         // Redirigir a página de inicio
-        window.location.href = 'index.html';
+        window.location.href = '../../index.html';
         
     } catch (error) {
         logError('Error al eliminar cuenta:', error);
-        showToast('error', 'Error', 'No se pudo eliminar la cuenta. Intenta cerrar sesión y volver a iniciar.');
         
-        hideDeleteModal();
+        let errorMessage = 'No se pudo eliminar la cuenta completamente.';
+        
+        if (error.message.includes('permisos')) {
+            errorMessage = error.message;
+        } else if (error.code === 'permission-denied') {
+            errorMessage = 'No tienes permisos suficientes. Verifica las reglas de seguridad de Firestore.';
+        }
+        
+        showToast('error', 'Error de Permisos', errorMessage);
+        
+        // Restaurar botón
+        elements.confirmDeleteBtn.disabled = false;
+        elements.confirmDeleteBtn.innerHTML = '<i data-feather="trash-2"></i> Eliminar cuenta';
+        if (typeof feather !== 'undefined') feather.replace();
     }
 }
 

@@ -1,7 +1,7 @@
 // Importar módulos de Firebase Auth y Firestore
 import { auth, db } from './firebase-init.js';
 import { onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
-import { doc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { doc, getDoc, onSnapshot, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
 /**
  * @file dashboard.js
@@ -115,8 +115,14 @@ function loadDashboardData(uid) {
             loadUserData(userData);
             updateLastCommit(userData);
             
+            // Verificar si es administrador y mostrar enlace al panel admin
+            checkAdminAccess(uid);
+            
             // Cargar estadísticas de ejercicios desde la colección results
             loadExerciseStatistics(uid);
+            
+            // Cargar envíos recientes
+            loadRecentSubmissions(uid);
             
             // Mostrar toast de bienvenida (solo la primera vez)
             if (!sessionStorage.getItem('welcomeShown')) {
@@ -136,6 +142,36 @@ function loadDashboardData(uid) {
         logError("❌ Error al obtener datos de Firestore:", error.code);
         showUserFriendlyError("Error de conexión. Verifica tu internet y recarga la página.");
     });
+}
+
+
+/**
+ * Verifica si el usuario actual es administrador y muestra el enlace al panel admin
+ * 
+ * @param {string} uid - UID del usuario autenticado
+ * @returns {void}
+ */
+async function checkAdminAccess(uid) {
+    try {
+        // Obtener el email del usuario desde Auth
+        const user = auth.currentUser;
+        if (!user || !user.email) return;
+        
+        // Verificar si existe en la colección de admins
+        const adminDoc = await getDoc(doc(db, 'admins', user.email));
+        
+        if (adminDoc.exists()) {
+            // Es administrador, mostrar el enlace
+            const adminMenuItem = document.getElementById('adminMenuItem');
+            if (adminMenuItem) {
+                adminMenuItem.style.display = 'block';
+                logDebug('✅ Usuario es administrador, mostrando enlace al panel admin');
+            }
+        }
+    } catch (error) {
+        logDebug('⚠️ Error al verificar acceso de admin:', error.code);
+        // No hacer nada, simplemente no mostrar el enlace
+    }
 }
 
 
@@ -186,13 +222,42 @@ async function loadExerciseStatistics(uid) {
             let totalTestsFailed = 0;
 
             latestResultsByExercise.forEach((result, exerciseId) => {
-                logDebug(`📊 Ejercicio ${exerciseId}: status=${result.status}, passed=${result.testsPassed}, failed=${result.testsFailed}`);
+                // Extraer valores con manejo robusto
+                const testsPassed = parseInt(result.testsPassed) || 0;
+                const testsFailed = parseInt(result.testsFailed) || 0;
+                const testsRun = parseInt(result.testsRun) || 0;
+                
+                // Si testsRun existe pero testsPassed/testsFailed no, calcular
+                let finalTestsPassed = testsPassed;
+                let finalTestsFailed = testsFailed;
+                
+                if (testsRun > 0 && (testsPassed === 0 && testsFailed === 0)) {
+                    // Si status es success, todos pasaron
+                    if (result.status === 'success') {
+                        finalTestsPassed = testsRun;
+                        finalTestsFailed = 0;
+                    } else {
+                        // Si hay error pero no sabemos cuántos fallaron, marcar todos como fallidos
+                        finalTestsPassed = 0;
+                        finalTestsFailed = testsRun;
+                    }
+                }
+                
+                logDebug(`📊 Ejercicio ${exerciseId}:`, {
+                    status: result.status,
+                    testsPassed: result.testsPassed,
+                    testsFailed: result.testsFailed,
+                    testsRun: result.testsRun,
+                    finalTestsPassed,
+                    finalTestsFailed
+                });
                 
                 if (result.status === 'success') {
                     completedExerciseIds.add(exerciseId);
                 }
-                totalTestsPassed += result.testsPassed || 0;
-                totalTestsFailed += result.testsFailed || 0;
+                
+                totalTestsPassed += finalTestsPassed;
+                totalTestsFailed += finalTestsFailed;
             });
 
             const completedCount = completedExerciseIds.size;
@@ -268,6 +333,130 @@ async function loadExerciseStatistics(uid) {
         logError("❌ Error al configurar listener de estadísticas:", error);
         hideSkeletonLoaders();
     }
+}
+
+
+/**
+ * Carga y muestra los envíos recientes del usuario
+ * 
+ * @param {string} uid - UID del usuario autenticado
+ * @returns {void}
+ */
+async function loadRecentSubmissions(uid) {
+    logInfo("📋 Cargando envíos recientes para UID:", uid);
+
+    try {
+        // Consultar los últimos 10 resultados del usuario, ordenados por fecha
+        const resultsQuery = query(
+            collection(db, 'results'),
+            where('userId', '==', uid)
+        );
+
+        onSnapshot(resultsQuery, async (resultsSnapshot) => {
+            logDebug(`✅ ${resultsSnapshot.size} resultados encontrados`);
+
+            // Convertir a array y ordenar por fecha (más reciente primero)
+            const results = [];
+            resultsSnapshot.forEach(doc => {
+                const result = doc.data();
+                results.push({
+                    id: doc.id,
+                    ...result,
+                    completedAt: result.completedAt?.toDate() || new Date(0)
+                });
+            });
+
+            // Ordenar por fecha descendente y tomar los últimos 5
+            results.sort((a, b) => b.completedAt - a.completedAt);
+            const recentResults = results.slice(0, 5);
+
+            logDebug(`📊 Mostrando ${recentResults.length} envíos recientes`);
+
+            // Obtener nombres de ejercicios
+            const exerciseNames = new Map();
+            if (recentResults.length > 0) {
+                const exercisesSnapshot = await getDocs(collection(db, 'exercises'));
+                exercisesSnapshot.forEach(doc => {
+                    const data = doc.data();
+                    exerciseNames.set(doc.id, data.title || data.name || `Ejercicio ${doc.id}`);
+                });
+            }
+
+            // Renderizar los envíos
+            renderRecentSubmissions(recentResults, exerciseNames);
+
+        }, (error) => {
+            logError("❌ Error al cargar envíos recientes:", error);
+        });
+
+    } catch (error) {
+        logError("❌ Error al configurar listener de envíos recientes:", error);
+    }
+}
+
+
+/**
+ * Renderiza la lista de envíos recientes en el DOM
+ * 
+ * @param {Array} results - Array de resultados
+ * @param {Map} exerciseNames - Mapa de IDs a nombres de ejercicios
+ * @returns {void}
+ */
+function renderRecentSubmissions(results, exerciseNames) {
+    const container = document.getElementById('recentSubmissions');
+    if (!container) return;
+
+    if (results.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state">
+                <i data-feather="inbox"></i>
+                <p>No hay envíos recientes</p>
+            </div>
+        `;
+        feather.replace();
+        return;
+    }
+
+    container.innerHTML = results.map(result => {
+        const testsPassed = parseInt(result.testsPassed) || 0;
+        const testsFailed = parseInt(result.testsFailed) || 0;
+        const testsRun = parseInt(result.testsRun) || 0;
+        const status = result.status === 'success' ? 'success' : (testsPassed > 0 ? 'partial' : 'failed');
+        const exerciseName = exerciseNames.get(result.exerciseId) || 'Ejercicio desconocido';
+        const timeAgo = formatRelativeTime(result.completedAt);
+
+        // Iconos por estado
+        const icons = {
+            success: 'check-circle',
+            failed: 'x-circle',
+            partial: 'alert-circle'
+        };
+
+        return `
+            <div class="submission-item">
+                <div class="submission-status ${status}">
+                    <i data-feather="${icons[status]}"></i>
+                </div>
+                <div class="submission-info">
+                    <div class="submission-exercise-name">${exerciseName}</div>
+                    <div class="submission-time">${timeAgo}</div>
+                </div>
+                <div class="submission-stats">
+                    <div class="submission-stat">
+                        <div class="submission-stat-value success">${testsPassed}</div>
+                        <div class="submission-stat-label">✓</div>
+                    </div>
+                    <div class="submission-stat">
+                        <div class="submission-stat-value failed">${testsFailed}</div>
+                        <div class="submission-stat-label">✗</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+
+    // Reemplazar iconos de feather
+    feather.replace();
 }
 
 
@@ -537,6 +726,16 @@ function animateStats(stats) {
     if (progressFill) {
         progressFill.style.width = '0%';
         requestAnimationFrame(() => { requestAnimationFrame(() => { progressFill.style.width = stats.courseProgress + '%'; }); });
+    }
+
+    // Highlight tests failed widget if there are any failures
+    const testsFailedWidget = document.getElementById('testsFailed')?.closest('.widget');
+    if (testsFailedWidget) {
+        if (stats.testsFailed > 0) {
+            testsFailedWidget.classList.add('has-failures');
+        } else {
+            testsFailedWidget.classList.remove('has-failures');
+        }
     }
 }
 

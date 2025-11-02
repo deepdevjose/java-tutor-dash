@@ -13,7 +13,9 @@ import {
     getDocs, 
     doc, 
     getDoc,
-    addDoc, 
+    addDoc,
+    setDoc,
+    deleteDoc,
     query, 
     where, 
     orderBy,
@@ -29,6 +31,7 @@ let allExercises = [];
 let currentExercise = null;
 let currentSubmissionId = null;
 let resultsListener = null;
+let autoSaveTimeout = null;
 
 // ==========================================
 // DOM ELEMENTS
@@ -95,6 +98,8 @@ document.addEventListener('DOMContentLoaded', () => {
             currentUser = user;
             console.log('✅ Usuario autenticado:', user.email);
             await initializePage();
+            // Verificar si es admin
+            await checkAdminAccess();
         } else {
             console.log('❌ Usuario no autenticado, redirigiendo...');
             window.location.href = '../../index.html';
@@ -130,6 +135,30 @@ async function initializePage() {
     } catch (error) {
         console.error('❌ Error al inicializar página:', error);
         showToast('error', 'Error', 'No se pudieron cargar los ejercicios');
+    }
+}
+
+// ==========================================
+// CHECK ADMIN ACCESS
+// ==========================================
+async function checkAdminAccess() {
+    try {
+        if (!currentUser || !currentUser.email) return;
+        
+        // Verificar si existe en la colección de admins
+        const adminDoc = await getDoc(doc(db, 'admins', currentUser.email));
+        
+        if (adminDoc.exists()) {
+            // Es administrador, mostrar el enlace
+            const adminMenuItem = document.getElementById('adminMenuItem');
+            if (adminMenuItem) {
+                adminMenuItem.style.display = 'block';
+                console.log('✅ Usuario es administrador, mostrando enlace al panel admin');
+            }
+        }
+    } catch (error) {
+        console.log('⚠️ Error al verificar acceso de admin:', error.code);
+        // No hacer nada, simplemente no mostrar el enlace
     }
 }
 
@@ -448,7 +477,7 @@ function createExerciseCard(exercise) {
 // ==========================================
 // OPEN EXERCISE MODAL
 // ==========================================
-function openExercise(exercise) {
+async function openExercise(exercise) {
     currentExercise = exercise;
     currentSubmissionId = null;
     
@@ -464,7 +493,14 @@ function openExercise(exercise) {
     elements.difficultyBadge.className = `difficulty-badge ${exercise.difficulty}`;
     elements.pointsBadge.textContent = `${points} punto${points !== 1 ? 's' : ''}`;
     elements.exerciseDescription.textContent = exercise.description;
-    elements.codeEditor.value = exercise.templateCode;
+    
+    // Intentar cargar código guardado previamente
+    const savedCode = await loadSavedCode(exercise.id);
+    elements.codeEditor.value = savedCode || exercise.templateCode;
+    
+    // Configurar auto-guardado mientras el usuario escribe
+    elements.codeEditor.removeEventListener('input', handleCodeChange);
+    elements.codeEditor.addEventListener('input', handleCodeChange);
     
     // Ocultar resultados
     elements.resultsSection.classList.add('hidden');
@@ -484,6 +520,14 @@ function closeExercise() {
     elements.exerciseModal.classList.remove('active');
     document.body.style.overflow = 'auto';
     
+    // Guardar código antes de cerrar
+    if (currentExercise) {
+        saveCodeDraft(currentExercise.id, elements.codeEditor.value);
+    }
+    
+    // Limpiar listener de input
+    elements.codeEditor.removeEventListener('input', handleCodeChange);
+    
     // Detener listener de resultados si existe
     if (resultsListener) {
         resultsListener();
@@ -492,11 +536,78 @@ function closeExercise() {
 }
 
 // ==========================================
+// AUTO-SAVE CODE FUNCTIONS
+// ==========================================
+
+// Manejar cambios en el editor (debounced)
+function handleCodeChange() {
+    if (!currentExercise) return;
+    
+    // Cancelar timeout anterior
+    if (autoSaveTimeout) {
+        clearTimeout(autoSaveTimeout);
+    }
+    
+    // Guardar después de 2 segundos de inactividad
+    autoSaveTimeout = setTimeout(() => {
+        saveCodeDraft(currentExercise.id, elements.codeEditor.value);
+    }, 2000);
+}
+
+// Guardar borrador de código en Firestore
+async function saveCodeDraft(exerciseId, code) {
+    if (!currentUser || !exerciseId) return;
+    
+    try {
+        const draftRef = doc(db, 'code_drafts', `${currentUser.uid}_${exerciseId}`);
+        await setDoc(draftRef, {
+            userId: currentUser.uid,
+            exerciseId: exerciseId,
+            code: code,
+            lastSaved: serverTimestamp()
+        });
+        console.log('💾 Código guardado automáticamente');
+    } catch (error) {
+        console.error('Error al guardar código:', error);
+    }
+}
+
+// Cargar código guardado desde Firestore
+async function loadSavedCode(exerciseId) {
+    if (!currentUser || !exerciseId) return null;
+    
+    try {
+        const draftRef = doc(db, 'code_drafts', `${currentUser.uid}_${exerciseId}`);
+        const draftDoc = await getDoc(draftRef);
+        
+        if (draftDoc.exists()) {
+            const data = draftDoc.data();
+            console.log('📂 Código cargado desde borrador guardado');
+            return data.code;
+        }
+    } catch (error) {
+        console.error('Error al cargar código guardado:', error);
+    }
+    
+    return null;
+}
+
+// ==========================================
 // RESET CODE
 // ==========================================
-function resetCode() {
+async function resetCode() {
     if (currentExercise) {
         elements.codeEditor.value = currentExercise.templateCode;
+        
+        // Eliminar borrador guardado
+        try {
+            const draftRef = doc(db, 'code_drafts', `${currentUser.uid}_${currentExercise.id}`);
+            await deleteDoc(draftRef);
+            console.log('🗑️ Borrador eliminado');
+        } catch (error) {
+            console.error('Error al eliminar borrador:', error);
+        }
+        
         showToast('info', 'Código restablecido', 'El código ha vuelto a la plantilla original');
     }
 }

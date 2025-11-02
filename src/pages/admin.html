@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración - Java Tutor</title>
+    <link rel="stylesheet" href="../css/admin.css">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+<body>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <i data-feather="shield"></i>
+                    <span class="logo-text">Admin Panel</span>
+                </div>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i data-feather="chevron-left"></i>
+                </button>
+            </div>
+
+            <nav class="sidebar-nav">
+                <a href="#exercises" class="nav-item active" data-section="exercises">
+                    <i data-feather="code"></i>
+                    <span class="nav-text">Ejercicios</span>
+                </a>
+                <a href="#users" class="nav-item" data-section="users">
+                    <i data-feather="users"></i>
+                    <span class="nav-text">Usuarios</span>
+                </a>
+                <a href="#submissions" class="nav-item" data-section="submissions">
+                    <i data-feather="send"></i>
+                    <span class="nav-text">Envíos</span>
+                </a>
+                <a href="#analytics" class="nav-item" data-section="analytics">
+                    <i data-feather="bar-chart-2"></i>
+                    <span class="nav-text">Analíticas</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="dashboard.html" class="nav-item">
+                    <i data-feather="arrow-left"></i>
+                    <span class="nav-text">Volver al Dashboard</span>
+                </a>
+                <div class="admin-profile" id="adminProfile">
+                    <img src="https://github.com/deepdevjose.png" alt="Admin" class="admin-avatar">
+                    <div class="admin-info">
+                        <div class="admin-name" id="adminName">Admin</div>
+                        <div class="admin-role">Administrador</div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Mobile Sidebar Toggle -->
+        <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+            <i data-feather="menu"></i>
+        </button>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Header -->
+            <header class="admin-header">
+                <div class="header-left">
+                    <h1 class="page-title" id="pageTitle">Gestión de Ejercicios</h1>
+                    <p class="page-subtitle" id="pageSubtitle">Crea y administra ejercicios de Java</p>
+                </div>
+                <div class="header-right">
+                    <button class="btn btn-primary" id="createExerciseBtn">
+                        <i data-feather="plus"></i>
+                        Nuevo Ejercicio
+                    </button>
+                </div>
+            </header>
+
+            <!-- Exercises Section -->
+            <section class="content-section active" id="exercises-section">
+                <div class="exercises-grid" id="exercisesGrid">
+                    <!-- Loading skeleton -->
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
+            </section>
+
+            <!-- Users Section -->
+            <section class="content-section" id="users-section">
+                <div class="users-table">
+                    <h2>Gestión de Usuarios</h2>
+                    <table id="usersTable">
+                        <thead>
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Email</th>
+                                <th>Matrícula</th>
+                                <th>GitHub</th>
+                                <th>Ejercicios Completados</th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody">
+                            <tr>
+                                <td colspan="6" class="loading">Cargando usuarios...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Submissions Section -->
+            <section class="content-section" id="submissions-section">
+                <h2>Envíos Recientes</h2>
+                <div class="submissions-list" id="submissionsList">
+                    <p class="loading">Cargando envíos...</p>
+                </div>
+            </section>
+
+            <!-- Analytics Section -->
+            <section class="content-section" id="analytics-section">
+                <h2>Analíticas del Sistema</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i data-feather="users"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalUsers">0</div>
+                            <div class="stat-label">Usuarios Totales</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i data-feather="code"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalExercises">0</div>
+                            <div class="stat-label">Ejercicios Creados</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i data-feather="send"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="totalSubmissions">0</div>
+                            <div class="stat-label">Envíos Totales</div>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i data-feather="check-circle"></i>
+                        </div>
+                        <div class="stat-info">
+                            <div class="stat-value" id="successRate">0%</div>
+                            <div class="stat-label">Tasa de Éxito</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Modal: Create/Edit Exercise -->
+    <div class="modal" id="exerciseModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="modalTitle">Crear Nuevo Ejercicio</h2>
+                <button class="modal-close" id="closeExerciseModal">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+
+            <div class="modal-body">
+                <form id="exerciseForm">
+                    <!-- Basic Info -->
+                    <div class="form-section">
+                        <h3>Información Básica</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="exerciseTitle">Título del Ejercicio *</label>
+                                <input type="text" id="exerciseTitle" required placeholder="Ej: Suma de dos números">
+                            </div>
+                            <div class="form-group">
+                                <label for="exerciseCategory">Categoría *</label>
+                                <select id="exerciseCategory" required>
+                                    <option value="">Selecciona una categoría</option>
+                                    <option value="basicos">Básicos</option>
+                                    <option value="condicionales">Condicionales</option>
+                                    <option value="ciclos">Ciclos</option>
+                                    <option value="arreglos">Arreglos</option>
+                                    <option value="poo">POO</option>
+                                    <option value="avanzados">Avanzados</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="exerciseDifficulty">Dificultad *</label>
+                                <select id="exerciseDifficulty" required>
+                                    <option value="">Selecciona dificultad</option>
+                                    <option value="easy">Fácil</option>
+                                    <option value="medium">Medio</option>
+                                    <option value="hard">Difícil</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="exercisePoints">Puntos *</label>
+                                <input type="number" id="exercisePoints" required min="1" placeholder="10">
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="exerciseDescription">Descripción *</label>
+                            <textarea id="exerciseDescription" required rows="4" 
+                                placeholder="Describe el ejercicio, los requisitos y lo que se espera..."></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Template Code -->
+                    <div class="form-section">
+                        <h3>Código Base (Template)</h3>
+                        <div class="form-group">
+                            <label for="exerciseTemplate">Plantilla de Código *</label>
+                            <textarea id="exerciseTemplate" required rows="10" 
+                                placeholder="{&#10; public class Main {&#10;  public static void main(String[] args) {&#10;    // Tu código aquí&#10;  }&#10;}"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Test Code -->
+                    <div class="form-section">
+                        <h3>Código de Test (AppTest.java)</h3>
+                        <div class="form-group">
+                            <label for="exerciseTestCode">Código Completo del Test *</label>
+                            <p class="help-text">Pega aquí el código completo de AppTest.java que validará las soluciones de los estudiantes.</p>
+                            <textarea id="exerciseTestCode" required rows="20" 
+                                placeholder="package com.javatutor;&#10;&#10;import org.junit.jupiter.api.Test;&#10;import static org.junit.jupiter.api.Assertions.*;&#10;&#10;class AppTest {&#10;    @Test&#10;    void testSolution() {&#10;        // Tu test aquí&#10;    }&#10;}"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Form Actions -->
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="cancelExerciseBtn">Cancelar</button>
+                        <button type="submit" class="btn btn-primary" id="saveExerciseBtn">
+                            <i data-feather="save"></i>
+                            Guardar Ejercicio
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>feather.replace();</script>
+    <script type="module" src="../js/admin.js"></script>
+</body>
+</html>

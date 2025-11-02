@@ -459,11 +459,48 @@ body {
 .activity-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
 .activity-time { font-size: 13px; color: var(--text-tertiary); }
 
+/* Recent Submissions */
+.recent-submissions-list { display: flex; flex-direction: column; gap: 12px; max-height: 350px; overflow-y: auto; }
+.recent-submissions-list .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; color: var(--text-tertiary); }
+.recent-submissions-list .empty-state i { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.5; }
+.recent-submissions-list .empty-state p { font-size: 14px; margin: 0; }
+
+.submission-item { display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--bg-secondary); border-radius: 10px; border: 1px solid transparent; transition: var(--transition); }
+.submission-item:hover { background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2); transform: translateX(3px); }
+
+.submission-status { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: var(--transition); }
+.submission-status.success { background: rgba(34, 197, 94, 0.15); color: var(--success-color); }
+.submission-status.failed { background: rgba(239, 68, 68, 0.15); color: var(--danger-color); }
+.submission-status.partial { background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); }
+.submission-item:hover .submission-status { transform: scale(1.1); }
+
+.submission-info { flex-grow: 1; min-width: 0; }
+.submission-exercise-name { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.submission-time { font-size: 12px; color: var(--text-tertiary); }
+
+.submission-stats { display: flex; gap: 12px; align-items: center; flex-shrink: 0; }
+.submission-stat { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.submission-stat-value { font-size: 16px; font-weight: 700; }
+.submission-stat-value.success { color: var(--success-color); }
+.submission-stat-value.failed { color: var(--danger-color); }
+.submission-stat-label { font-size: 10px; color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.5px; }
+
 /* Widget Color Variations Enhanced */
 .widget:nth-child(1) .widget-icon { background: rgba(34, 197, 94, 0.15); color: var(--success-color); }
 .widget:nth-child(2) .widget-icon { background: rgba(239, 68, 68, 0.15); color: var(--danger-color); }
 .widget:nth-child(3) .widget-icon { background: rgba(59, 130, 246, 0.15); color: var(--accent-color); }
 .widget:nth-child(4) .widget-icon { background: rgba(251, 191, 36, 0.15); color: var(--accent-yellow); }
+
+/* Special styling for failed tests counter */
+#testsFailed { color: var(--danger-color); }
+#testsPassed { color: var(--success-color); }
+
+/* Highlight tests failed widget when there are failures */
+.widget.has-failures { border-color: rgba(239, 68, 68, 0.5) !important; animation: pulse-red 2s infinite; }
+@keyframes pulse-red {
+    0%, 100% { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.2); }
+    50% { box-shadow: 0 4px 30px rgba(239, 68, 68, 0.4); }
+}
 
 
 /* ================================
