@@ -24,10 +24,19 @@ jobs:
           echo "Exercise ID: ${{ github.event.client_payload.exerciseId }}"
           echo "User ID: ${{ github.event.client_payload.userId }}"
       
+      - name: Verify project structure
+        run: |
+          echo "📂 Verificando estructura del proyecto..."
+          ls -la example/actions-ejemplo/ || echo "❌ No existe example/actions-ejemplo/"
+          ls -la example/actions-ejemplo/pom.xml || echo "❌ No existe pom.xml"
+          ls -la example/actions-ejemplo/src/test/java/com/javatutor/ || echo "❌ No existen tests"
+      
       - name: Create student code file
         run: |
+          echo "📝 Creando archivo con código del estudiante..."
           mkdir -p example/actions-ejemplo/src/main/java/com/javatutor
           echo "${{ github.event.client_payload.studentCode }}" > example/actions-ejemplo/src/main/java/com/javatutor/App.java
+          echo "✅ Código del estudiante guardado:"
           cat example/actions-ejemplo/src/main/java/com/javatutor/App.java
       
       - name: Run Maven tests
@@ -35,14 +44,20 @@ jobs:
         continue-on-error: true
         working-directory: example/actions-ejemplo
         run: |
-          mvn clean test -B | tee ../../test_output.log
+          echo "🧪 Ejecutando tests de Maven..."
+          mvn clean test -B 2>&1 | tee test_output.log
           exit_code=${PIPESTATUS[0]}
           echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+          echo "📄 Moviendo archivo de salida..."
+          mv test_output.log ../../test_output.log
       
       - name: Parse test results
         id: parse_results
         run: |
+          echo "🔍 Parseando resultados de tests..."
           if [ -f test_output.log ]; then
+            echo "✅ Archivo test_output.log encontrado"
+            cat test_output.log
             # Extraer información de tests
             TESTS_RUN=$(grep -oP 'Tests run: \K\d+' test_output.log | head -1 || echo "0")
             TESTS_FAILED=$(grep -oP 'Failures: \K\d+' test_output.log | head -1 || echo "0")
