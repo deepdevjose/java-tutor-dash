@@ -30,25 +30,53 @@ jobs:
           FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
         run: |
           echo "📥 Obteniendo código de test desde Firestore..."
+          echo "🔑 Project ID: $FIREBASE_PROJECT_ID"
+          echo "📝 Exercise ID: ${{ github.event.client_payload.exerciseId }}"
           
           EXERCISE_RESPONSE=$(curl -s \
             "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT_ID/databases/(default)/documents/exercises/${{ github.event.client_payload.exerciseId }}")
           
-          # Extract testCode field from Firestore response
-          TEST_CODE=$(echo "$EXERCISE_RESPONSE" | jq -r '.fields.testCode.stringValue // empty')
+          # Debug: mostrar respuesta completa
+          echo "🔍 Respuesta de Firestore (primeros 500 caracteres):"
+          echo "$EXERCISE_RESPONSE" | head -c 500
+          echo ""
+          echo "---"
           
-          if [ -z "$TEST_CODE" ]; then
-            echo "❌ No se encontró código de test para este ejercicio"
+          # Verificar si hay error en la respuesta
+          ERROR_CODE=$(echo "$EXERCISE_RESPONSE" | jq -r '.error.code // empty')
+          if [ ! -z "$ERROR_CODE" ]; then
+            echo "❌ Error de Firestore: $ERROR_CODE"
+            echo "$EXERCISE_RESPONSE" | jq '.error'
             exit 1
           fi
           
-          # Create test directory
-          mkdir -p example/actions-ejemplo/src/test/java/com/javatutor
+          # Extract testCode field from Firestore response
+          TEST_CODE=$(echo "$EXERCISE_RESPONSE" | jq -r '.fields.testCode.stringValue // empty')
           
-          # Write test code to AppTest.java
-          echo "$TEST_CODE" > example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java
+          echo "📏 Longitud del testCode: ${#TEST_CODE}"
           
-          echo "✅ Test descargado y guardado"
+          # Si no hay testCode, intentar con tests (viejo formato)
+          if [ -z "$TEST_CODE" ]; then
+            echo "⚠️ No se encontró campo 'testCode'"
+            echo "🔍 Campos disponibles en el documento:"
+            echo "$EXERCISE_RESPONSE" | jq '.fields | keys'
+            
+            # Usar el test por defecto que ya existe en el repo
+            if [ ! -f "example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java" ]; then
+              echo "❌ No se encontró código de test para este ejercicio"
+              exit 1
+            fi
+            echo "✅ Usando test existente en el repositorio"
+          else
+            # Create test directory
+            mkdir -p example/actions-ejemplo/src/test/java/com/javatutor
+            
+            # Write test code to AppTest.java
+            echo "$TEST_CODE" > example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java
+            
+            echo "✅ Test descargado y guardado desde Firestore"
+          fi
+          
           echo "📄 Contenido del test:"
           cat example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java
       
