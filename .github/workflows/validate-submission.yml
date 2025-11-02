@@ -46,6 +46,16 @@ jobs:
           echo "📏 Número de líneas:"
           wc -l example/actions-ejemplo/src/main/java/com/javatutor/App.java
       
+      - name: Verify files before compilation
+        run: |
+          echo "🔍 Verificando archivos antes de compilar..."
+          echo "📁 Archivos en src/main/java/com/javatutor/:"
+          ls -la example/actions-ejemplo/src/main/java/com/javatutor/
+          echo "📁 Archivos en src/test/java/com/javatutor/:"
+          ls -la example/actions-ejemplo/src/test/java/com/javatutor/
+          echo "📄 Contenido de App.java:"
+          cat example/actions-ejemplo/src/main/java/com/javatutor/App.java
+      
       - name: Run Maven tests
         id: maven_test
         continue-on-error: true
