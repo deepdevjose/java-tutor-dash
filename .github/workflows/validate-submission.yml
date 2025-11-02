@@ -61,11 +61,8 @@ jobs:
         continue-on-error: true
         working-directory: example/actions-ejemplo
         run: |
-          echo "🧪 Ejecutando tests de Maven..."
-          echo "📦 Primero compilar las clases principales..."
-          mvn clean compile -B 2>&1 | tee test_output.log
-          echo "🧪 Ahora compilar y ejecutar tests..."
-          mvn test -B 2>&1 | tee -a test_output.log
+          echo "🧪 Ejecutando compilación y tests de Maven..."
+          mvn clean compile test-compile surefire:test -B 2>&1 | tee test_output.log
           exit_code=${PIPESTATUS[0]}
           echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
           echo "📄 Moviendo archivo de salida..."
