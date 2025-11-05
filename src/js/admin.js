@@ -17,6 +17,7 @@ import {
     query,
     where,
     orderBy,
+    limit,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 
@@ -33,8 +34,6 @@ let currentExerciseId = null;
 const elements = {
     // Sidebar
     sidebar: document.getElementById('sidebar'),
-    sidebarToggle: document.getElementById('sidebarToggle'),
-    mobileSidebarToggle: document.getElementById('mobileSidebarToggle'),
     sidebarOverlay: document.getElementById('sidebarOverlay'),
     adminName: document.getElementById('adminName'),
     
@@ -135,30 +134,6 @@ function initializeAdminPanel() {
 // EVENT LISTENERS
 // ==========================================
 function setupEventListeners() {
-    // Sidebar toggle
-    if (elements.sidebarToggle) {
-        elements.sidebarToggle.addEventListener('click', () => {
-            elements.sidebar.classList.toggle('collapsed');
-            localStorage.setItem('adminSidebarCollapsed', elements.sidebar.classList.contains('collapsed'));
-        });
-    }
-    
-    // Mobile sidebar toggle
-    if (elements.mobileSidebarToggle) {
-        elements.mobileSidebarToggle.addEventListener('click', () => {
-            elements.sidebar.classList.toggle('collapsed');
-            elements.sidebarOverlay.classList.toggle('active');
-        });
-    }
-    
-    // Sidebar overlay
-    if (elements.sidebarOverlay) {
-        elements.sidebarOverlay.addEventListener('click', () => {
-            elements.sidebar.classList.remove('collapsed');
-            elements.sidebarOverlay.classList.remove('active');
-        });
-    }
-    
     // Navigation
     elements.navItems.forEach(item => {
         item.addEventListener('click', (e) => {
@@ -238,10 +213,6 @@ function switchSection(sectionName) {
             title: 'Gestión de Usuarios',
             subtitle: 'Administra los usuarios del sistema'
         },
-        submissions: {
-            title: 'Envíos Recientes',
-            subtitle: 'Revisa los envíos de los estudiantes'
-        },
         analytics: {
             title: 'Analíticas del Sistema',
             subtitle: 'Estadísticas y métricas generales'
@@ -257,8 +228,6 @@ function switchSection(sectionName) {
     // Load section data
     if (sectionName === 'users') {
         loadUsers();
-    } else if (sectionName === 'submissions') {
-        loadSubmissions();
     } else if (sectionName === 'analytics') {
         loadStats();
     }
@@ -570,8 +539,11 @@ function renderUsers(users) {
             <td>${user.githubUsername || 'N/A'}</td>
             <td>0</td>
             <td>
-                <button class="icon-btn" title="Ver detalles">
+                <button class="icon-btn" onclick="viewUserDetails('${user.id}')" title="Ver detalles">
                     <i data-feather="eye"></i>
+                </button>
+                <button class="icon-btn delete" onclick="deleteUser('${user.id}', '${user.email}')" title="Eliminar usuario">
+                    <i data-feather="trash-2"></i>
                 </button>
             </td>
         </tr>
@@ -581,25 +553,153 @@ function renderUsers(users) {
 }
 
 // ==========================================
-// LOAD SUBMISSIONS
+// VIEW USER DETAILS
 // ==========================================
-async function loadSubmissions() {
-    try {
-        const submissionsSnapshot = await getDocs(
-            query(collection(db, 'submissions'), orderBy('createdAt', 'desc'))
-        );
-        
-        const submissions = [];
-        submissionsSnapshot.forEach(doc => {
-            submissions.push({ id: doc.id, ...doc.data() });
-        });
-        
-        console.log(`✅ ${submissions.length} envíos cargados`);
-        // TODO: Render submissions
-    } catch (error) {
-        console.error('❌ Error al cargar envíos:', error);
+window.viewUserDetails = async function(userId) {
+    console.log('👁️ Ver detalles de usuario:', userId);
+    showToast('info', 'Información', 'Funcionalidad en desarrollo');
+};
+
+// ==========================================
+// DELETE USER
+// ==========================================
+window.deleteUser = async function(userId, userEmail) {
+    if (!isAdmin) {
+        showToast('error', 'Acceso Denegado', 'No tienes permisos para realizar esta acción');
+        return;
     }
-}
+    
+    try {
+        // Confirmación estricta
+        const confirmText = prompt(
+            `⚠️ ADVERTENCIA CRÍTICA: ELIMINACIÓN PERMANENTE DE USUARIO\n\n` +
+            `Estás a punto de ELIMINAR PERMANENTEMENTE al usuario:\n` +
+            `📧 Email: ${userEmail}\n\n` +
+            `Esta acción eliminará TODA la información del usuario:\n` +
+            `✓ Documento de usuario (usuarios)\n` +
+            `✓ Todos sus envíos (submissions)\n` +
+            `✓ Todos sus resultados (results)\n` +
+            `✓ Todos sus borradores de código (code_drafts)\n` +
+            `✓ Mapeo de GitHub username (github_usernames)\n` +
+            `✓ Mapeo de matrícula (matriculas)\n\n` +
+            `⚠️ ESTA ACCIÓN NO SE PUEDE DESHACER ⚠️\n\n` +
+            `Para confirmar, escribe exactamente: ELIMINAR USUARIO`
+        );
+
+        if (confirmText !== "ELIMINAR USUARIO") {
+            showToast('info', 'Cancelado', 'Eliminación cancelada');
+            return;
+        }
+
+        showToast('info', 'Eliminando', 'Eliminando usuario y todos sus datos...');
+
+        // Obtener datos del usuario
+        const userDoc = await getDoc(doc(db, 'usuarios', userId));
+        if (!userDoc.exists()) {
+            throw new Error('Usuario no encontrado');
+        }
+
+        const userData = userDoc.data();
+        let deletedItems = {
+            submissions: 0,
+            results: 0,
+            code_drafts: 0,
+            github_username: 0,
+            matricula: 0
+        };
+
+        // 1. Eliminar todos los code_drafts del usuario
+        console.log('🗑️ Eliminando code_drafts...');
+        const draftsQuery = query(
+            collection(db, 'code_drafts'),
+            where('userId', '==', userId)
+        );
+        const draftsSnapshot = await getDocs(draftsQuery);
+        const draftDeletes = draftsSnapshot.docs.map(d => deleteDoc(d.ref));
+        await Promise.all(draftDeletes);
+        deletedItems.code_drafts = draftsSnapshot.size;
+        console.log(`✅ ${draftsSnapshot.size} code_drafts eliminados`);
+
+        // 2. Eliminar todos los submissions del usuario
+        console.log('🗑️ Eliminando submissions...');
+        const submissionsQuery = query(
+            collection(db, 'submissions'),
+            where('userId', '==', userId)
+        );
+        const submissionsSnapshot = await getDocs(submissionsQuery);
+        const submissionDeletes = submissionsSnapshot.docs.map(d => deleteDoc(d.ref));
+        await Promise.all(submissionDeletes);
+        deletedItems.submissions = submissionsSnapshot.size;
+        console.log(`✅ ${submissionsSnapshot.size} submissions eliminados`);
+
+        // 3. Eliminar todos los results del usuario
+        console.log('🗑️ Eliminando results...');
+        const resultsQuery = query(
+            collection(db, 'results'),
+            where('userId', '==', userId)
+        );
+        const resultsSnapshot = await getDocs(resultsQuery);
+        const resultDeletes = resultsSnapshot.docs.map(d => deleteDoc(d.ref));
+        await Promise.all(resultDeletes);
+        deletedItems.results = resultsSnapshot.size;
+        console.log(`✅ ${resultsSnapshot.size} results eliminados`);
+
+        // 4. Eliminar mapeo de GitHub username
+        if (userData.githubUsername) {
+            console.log('🗑️ Eliminando mapeo de GitHub username...');
+            try {
+                const githubDocRef = doc(db, 'github_usernames', userData.githubUsername);
+                await deleteDoc(githubDocRef);
+                deletedItems.github_username = 1;
+                console.log(`✅ GitHub username mapping eliminado: ${userData.githubUsername}`);
+            } catch (error) {
+                console.warn('⚠️ No se pudo eliminar mapeo de GitHub:', error);
+            }
+        }
+
+        // 5. Eliminar mapeo de matrícula
+        if (userData.matricula) {
+            console.log('🗑️ Eliminando mapeo de matrícula...');
+            try {
+                const matriculaDocRef = doc(db, 'matriculas', userData.matricula);
+                await deleteDoc(matriculaDocRef);
+                deletedItems.matricula = 1;
+                console.log(`✅ Matrícula mapping eliminada: ${userData.matricula}`);
+            } catch (error) {
+                console.warn('⚠️ No se pudo eliminar mapeo de matrícula:', error);
+            }
+        }
+
+        // 6. Eliminar documento de usuario
+        console.log('🗑️ Eliminando documento de usuario...');
+        await deleteDoc(doc(db, 'usuarios', userId));
+        console.log(`✅ Documento de usuario eliminado`);
+
+        // Mostrar resumen
+        const summary = 
+            `Usuario ${userEmail} eliminado correctamente.\n\n` +
+            `Elementos eliminados:\n` +
+            `📄 Usuario: 1\n` +
+            `📝 Submissions: ${deletedItems.submissions}\n` +
+            `📊 Results: ${deletedItems.results}\n` +
+            `💾 Code drafts: ${deletedItems.code_drafts}\n` +
+            `🔗 GitHub mapping: ${deletedItems.github_username}\n` +
+            `🎓 Matrícula mapping: ${deletedItems.matricula}\n\n` +
+            `⚠️ IMPORTANTE: El usuario debe ser eliminado manualmente de Firebase Authentication.`;
+
+        console.log('✅ USUARIO ELIMINADO COMPLETAMENTE');
+        console.log(summary);
+        
+        showToast('success', 'Usuario Eliminado', summary);
+
+        // Recargar lista de usuarios
+        loadUsers();
+
+    } catch (error) {
+        console.error('❌ Error al eliminar usuario:', error);
+        showToast('error', 'Error', `No se pudo eliminar el usuario: ${error.message}`);
+    }
+};
 
 // ==========================================
 // TOAST NOTIFICATIONS

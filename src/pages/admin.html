@@ -16,32 +16,25 @@
                     <i data-feather="shield"></i>
                     <span class="logo-text">Admin Panel</span>
                 </div>
-                <button class="sidebar-toggle" id="sidebarToggle">
-                    <i data-feather="chevron-left"></i>
-                </button>
             </div>
 
             <nav class="sidebar-nav">
-                <a href="#exercises" class="nav-item active" data-section="exercises">
+                <a href="#exercises" class="nav-item active" data-section="exercises" data-tooltip="Ejercicios">
                     <i data-feather="code"></i>
                     <span class="nav-text">Ejercicios</span>
                 </a>
-                <a href="#users" class="nav-item" data-section="users">
+                <a href="#users" class="nav-item" data-section="users" data-tooltip="Usuarios">
                     <i data-feather="users"></i>
                     <span class="nav-text">Usuarios</span>
                 </a>
-                <a href="#submissions" class="nav-item" data-section="submissions">
-                    <i data-feather="send"></i>
-                    <span class="nav-text">Envíos</span>
-                </a>
-                <a href="#analytics" class="nav-item" data-section="analytics">
+                <a href="#analytics" class="nav-item" data-section="analytics" data-tooltip="Analíticas">
                     <i data-feather="bar-chart-2"></i>
                     <span class="nav-text">Analíticas</span>
                 </a>
             </nav>
 
             <div class="sidebar-footer">
-                <a href="dashboard.html" class="nav-item">
+                <a href="dashboard.html" class="nav-item" data-tooltip="Volver al Dashboard">
                     <i data-feather="arrow-left"></i>
                     <span class="nav-text">Volver al Dashboard</span>
                 </a>
@@ -110,14 +103,6 @@
                             </tr>
                         </tbody>
                     </table>
-                </div>
-            </section>
-
-            <!-- Submissions Section -->
-            <section class="content-section" id="submissions-section">
-                <h2>Envíos Recientes</h2>
-                <div class="submissions-list" id="submissionsList">
-                    <p class="loading">Cargando envíos...</p>
                 </div>
             </section>
 
