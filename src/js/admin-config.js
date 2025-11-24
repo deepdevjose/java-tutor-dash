@@ -15,7 +15,8 @@
 export const ADMIN_EMAILS = [
     'fcuadros@itsoeh.edu.mx',
     'deepdevjose@itsoeh.edu.mx',
-    '230110073@itsoeh.edu.mx'
+    '230110073@itsoeh.edu.mx',
+    '230110063@itsoeh.edu.mx'
     // Agrega más emails aquí según sea necesario
     // 'profesor@itsoeh.edu.mx',
     // 'admin@itsoeh.edu.mx',
