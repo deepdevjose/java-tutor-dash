@@ -15,8 +15,22 @@
 export const ADMIN_EMAILS = [
     'fcuadros@itsoeh.edu.mx',
     'deepdevjose@itsoeh.edu.mx',
+    '230110197@itsoeh.edu.mx',
     '230110073@itsoeh.edu.mx',
-    '230110063@itsoeh.edu.mx'
+    '230110449@itsoeh.edu.mx',
+    '230110874@itsoeh.edu.mx',
+    '230110443@itsoeh.edu.mx',
+    '230110050@itsoeh.edu.mx',
+    '230110166@itsoeh.edu.mx',
+    '230110084@itsoeh.edu.mx',
+    '230110063@itsoeh.edu.mx',
+    '230110077@itsoeh.edu.mx',
+    'galy7977@gmail.com',
+    '230110689@itsoeh.edu.mx',
+    '230110313@itsoeh.edu.mx',
+    '230110530@itsoeh.edu.mx',
+    '230110581@itsoeh.edu.mx',
+    '230110579@itsoeh.edu.mx'
     // Agrega más emails aquí según sea necesario
     // 'profesor@itsoeh.edu.mx',
     // 'admin@itsoeh.edu.mx',
