@@ -471,13 +471,49 @@ body {
     overflow: hidden;
 }
 
+.exercise-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
+.exercise-author i {
+    width: 14px;
+    height: 14px;
+}
+
 .exercise-stats {
     display: flex;
     justify-content: space-between;
+    align-items: center;
     padding-top: 16px;
     border-top: 1px solid var(--border-color);
     font-size: 13px;
     color: var(--text-tertiary);
+}
+
+.exercise-stats a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--accent-purple);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+
+.exercise-stats a:hover {
+    color: var(--accent-color);
+    transform: translateX(2px);
+}
+
+.exercise-stats a i {
+    width: 14px;
+    height: 14px;
 }
 
 .exercise-actions {

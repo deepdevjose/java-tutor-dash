@@ -59,6 +59,8 @@ const elements = {
     exerciseDifficulty: document.getElementById('exerciseDifficulty'),
     exercisePoints: document.getElementById('exercisePoints'),
     exerciseDescription: document.getElementById('exerciseDescription'),
+    exerciseAuthor: document.getElementById('exerciseAuthor'),
+    exerciseTheoryLink: document.getElementById('exerciseTheoryLink'),
     exerciseTemplate: document.getElementById('exerciseTemplate'),
     exerciseTestCode: document.getElementById('exerciseTestCode'),
     cancelExerciseBtn: document.getElementById('cancelExerciseBtn'),
@@ -285,9 +287,17 @@ function renderExercises(exercises) {
             
             <p class="exercise-description">${exercise.description || 'Sin descripción'}</p>
             
+            ${exercise.author ? `<div class="exercise-author">
+                <i data-feather="user"></i>
+                <span>Por ${exercise.author}</span>
+            </div>` : ''}
+            
             <div class="exercise-stats">
                 <span><i data-feather="award"></i> ${exercise.points || 0} puntos</span>
                 <span><i data-feather="check-circle"></i> ${exercise.tests?.length || 0} tests</span>
+                ${exercise.theoryLink ? `<a href="${exercise.theoryLink}" target="_blank" rel="noopener noreferrer" title="Ver teoría">
+                    <i data-feather="book-open"></i> Teoría
+                </a>` : ''}
             </div>
             
             <div class="exercise-actions">
@@ -362,6 +372,8 @@ async function loadExerciseData(exerciseId) {
         elements.exerciseDifficulty.value = exercise.difficulty || '';
         elements.exercisePoints.value = exercise.points || 0;
         elements.exerciseDescription.value = exercise.description || '';
+        elements.exerciseAuthor.value = exercise.author || '';
+        elements.exerciseTheoryLink.value = exercise.theoryLink || '';
         elements.exerciseTemplate.value = exercise.templateCode || '';
         elements.exerciseTestCode.value = exercise.testCode || '';
         
@@ -395,6 +407,8 @@ async function handleExerciseSubmit(e) {
             difficulty: elements.exerciseDifficulty.value,
             points: parseInt(elements.exercisePoints.value) || 0,
             description: elements.exerciseDescription.value.trim(),
+            author: elements.exerciseAuthor.value.trim(),
+            theoryLink: elements.exerciseTheoryLink.value.trim() || null,
             templateCode: elements.exerciseTemplate.value.trim(),
             testCode: elements.exerciseTestCode.value.trim(),
             updatedAt: serverTimestamp(),

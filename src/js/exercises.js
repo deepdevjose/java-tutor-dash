@@ -45,6 +45,10 @@ const elements = {
     categoryFilter: document.getElementById('categoryFilter'),
     statusToggle: document.getElementById('statusToggle'),
     
+    // View Toggle
+    gridViewBtn: document.getElementById('gridViewBtn'),
+    listViewBtn: document.getElementById('listViewBtn'),
+    
     // Modal
     exerciseModal: document.getElementById('exerciseModal'),
     closeExerciseModal: document.getElementById('closeExerciseModal'),
@@ -255,7 +259,9 @@ async function loadExercises() {
                 points: points,
                 order: data.order,
                 isActive: data.isActive,
-                tags: data.tags || []
+                tags: data.tags || [],
+                author: data.author || null,
+                theoryLink: data.theoryLink || null
             };
             console.log('✨ Datos limpios:', cleanData);
             allExercises.push(cleanData);
@@ -451,6 +457,10 @@ function createExerciseCard(exercise) {
     card.innerHTML = `
         <h3>${title}</h3>
         <p>${shortDescription}</p>
+        ${exercise.author ? `<div class="exercise-author">
+            <i data-feather="user"></i>
+            <span>Por ${exercise.author}</span>
+        </div>` : ''}
         <div class="exercise-meta">
             <span class="difficulty-badge ${difficulty}">
                 <i data-feather="trending-up"></i>
@@ -465,6 +475,12 @@ function createExerciseCard(exercise) {
                 ${category}
             </span>
         </div>
+        ${exercise.theoryLink ? `<div class="exercise-theory">
+            <a href="${exercise.theoryLink}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation();">
+                <i data-feather="book-open"></i>
+                <span>Ver teoría</span>
+            </a>
+        </div>` : ''}
         <div class="exercise-status ${exercise.completed ? 'completed' : 'pending'}">
             <i data-feather="${exercise.completed ? 'check-circle' : 'clock'}"></i>
             <span>${exercise.completed ? 'Completado' : 'Pendiente'}</span>
@@ -815,6 +831,34 @@ function populateCategoryFilter() {
 // ==========================================
 // UTILITY FUNCTIONS
 // ==========================================
+function setView(viewType) {
+    if (!elements.exercisesContainer) return;
+    
+    // Update container class
+    if (viewType === 'list') {
+        elements.exercisesContainer.classList.add('list-view');
+    } else {
+        elements.exercisesContainer.classList.remove('list-view');
+    }
+    
+    // Update button states
+    if (elements.gridViewBtn && elements.listViewBtn) {
+        if (viewType === 'list') {
+            elements.gridViewBtn.classList.remove('active');
+            elements.listViewBtn.classList.add('active');
+        } else {
+            elements.gridViewBtn.classList.add('active');
+            elements.listViewBtn.classList.remove('active');
+        }
+    }
+    
+    // Save preference
+    localStorage.setItem('exercisesView', viewType);
+    
+    // Re-render exercises to adjust layout if needed
+    feather.replace();
+}
+
 function getDifficultyText(difficulty) {
     const texts = {
         easy: 'Fácil',
@@ -918,6 +962,19 @@ function initializeEventListeners() {
             showToast('info', 'Filtros limpiados', 'Mostrando todos los ejercicios');
         });
     }
+    
+    // View Toggle Buttons
+    elements.gridViewBtn?.addEventListener('click', () => {
+        setView('grid');
+    });
+    
+    elements.listViewBtn?.addEventListener('click', () => {
+        setView('list');
+    });
+    
+    // Load saved view preference
+    const savedView = localStorage.getItem('exercisesView') || 'grid';
+    setView(savedView);
     
     // Search Input
     const searchInput = document.getElementById('searchInput');

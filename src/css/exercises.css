@@ -1361,6 +1361,49 @@ body {
     margin-bottom: 16px;
 }
 
+.exercise-author {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-tertiary);
+    font-size: 13px;
+    font-style: italic;
+    margin-bottom: 12px;
+}
+
+.exercise-author i {
+    width: 14px;
+    height: 14px;
+}
+
+.exercise-theory {
+    margin-bottom: 12px;
+}
+
+.exercise-theory a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    background: rgba(139, 92, 246, 0.1);
+    color: var(--accent-purple);
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.3s ease;
+}
+
+.exercise-theory a:hover {
+    background: rgba(139, 92, 246, 0.2);
+    transform: translateX(4px);
+}
+
+.exercise-theory a i {
+    width: 14px;
+    height: 14px;
+}
+
 .exercise-meta {
     display: flex;
     gap: 12px;
@@ -1434,6 +1477,83 @@ body {
 
 .exercise-status.pending {
     color: var(--warning-color);
+}
+
+/* List View Styles */
+.exercises-container.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.exercises-container.list-view .exercise-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.exercises-container.list-view .exercise-card:hover {
+    border-left-color: var(--accent-color);
+}
+
+.exercises-container.list-view .exercise-card.completed {
+    border-left-color: var(--success-color);
+}
+
+.exercises-container.list-view .exercise-card h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    flex: 0 0 280px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.exercises-container.list-view .exercise-card p {
+    display: none;
+}
+
+.exercises-container.list-view .exercise-author {
+    margin: 0;
+    flex: 0 0 auto;
+    font-size: 12px;
+}
+
+.exercises-container.list-view .exercise-theory {
+    margin: 0;
+    flex: 0 0 auto;
+}
+
+.exercises-container.list-view .exercise-theory a {
+    padding: 4px 10px;
+    font-size: 12px;
+}
+
+.exercises-container.list-view .exercise-meta {
+    margin: 0;
+    gap: 8px;
+    flex: 1;
+    justify-content: flex-start;
+}
+
+.exercises-container.list-view .exercise-meta .difficulty-badge,
+.exercises-container.list-view .exercise-meta .points-badge,
+.exercises-container.list-view .exercise-meta .category-badge {
+    padding: 4px 10px;
+    font-size: 11px;
+}
+
+.exercises-container.list-view .exercise-status {
+    padding: 0;
+    border: none;
+    margin: 0;
+    flex: 0 0 auto;
+    font-size: 13px;
 }
 
 /* Skeleton Loaders */
@@ -2481,6 +2601,46 @@ body {
     font-weight: 600;
 }
 
+/* View Toggle Buttons */
+.view-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 4px;
+    border: 1px solid var(--border-color);
+    flex-shrink: 0;
+}
+
+.view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.view-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.view-btn.active {
+    background: var(--accent-color);
+    color: white;
+}
+
+.view-btn i {
+    width: 18px;
+    height: 18px;
+}
+
 /* Toggle Button Groups */
 .toggle-group {
     display: flex;
@@ -3225,6 +3385,31 @@ body {
         padding: 20px;
         grid-template-columns: 1fr;
         gap: 16px;
+    }
+    
+    /* List View Adjustments for Mobile */
+    .exercises-container.list-view .exercise-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+        padding: 16px;
+    }
+    
+    .exercises-container.list-view .exercise-card h3 {
+        flex: 1;
+        font-size: 14px;
+        white-space: normal;
+    }
+    
+    .exercises-container.list-view .exercise-meta {
+        flex-wrap: wrap;
+        width: 100%;
+    }
+    
+    .exercises-container.list-view .exercise-author,
+    .exercises-container.list-view .exercise-theory,
+    .exercises-container.list-view .exercise-status {
+        width: 100%;
     }
     
     /* Exercise Cards */
