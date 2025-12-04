@@ -36,6 +36,7 @@ const elements = {
     sidebar: document.getElementById('sidebar'),
     sidebarOverlay: document.getElementById('sidebarOverlay'),
     adminName: document.getElementById('adminName'),
+    adminAvatar: document.querySelector('.admin-avatar'),
     
     // Navigation
     navItems: document.querySelectorAll('.nav-item[data-section]'),
@@ -104,10 +105,41 @@ async function checkAdminAccess(user) {
             isAdmin = true;
             console.log('✅ Usuario es administrador');
             
-            // Load admin data
-            const adminData = adminDoc.data();
-            if (elements.adminName) {
-                elements.adminName.textContent = adminData.githubUsername || user.email.split('@')[0];
+            // Load user data from usuarios collection
+            try {
+                const userDoc = await getDoc(doc(db, 'usuarios', user.uid));
+                if (userDoc.exists()) {
+                    const userData = userDoc.data();
+                    const githubUsername = userData.githubUsername || user.email.split('@')[0];
+                    const displayName = userData.firstName && userData.lastName 
+                        ? `${userData.firstName} ${userData.lastName}`
+                        : githubUsername;
+                    
+                    // Update admin name
+                    if (elements.adminName) {
+                        elements.adminName.textContent = displayName;
+                    }
+                    
+                    // Update admin avatar
+                    if (elements.adminAvatar && githubUsername) {
+                        elements.adminAvatar.src = `https://github.com/${githubUsername}.png`;
+                        elements.adminAvatar.alt = displayName;
+                    }
+                } else {
+                    // Fallback to email if user doc doesn't exist
+                    if (elements.adminName) {
+                        elements.adminName.textContent = user.email.split('@')[0];
+                    }
+                    if (elements.adminAvatar) {
+                        elements.adminAvatar.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.email.split('@')[0])}&background=3b82f6&color=fff`;
+                    }
+                }
+            } catch (error) {
+                console.error('❌ Error al cargar datos del usuario:', error);
+                // Fallback to email
+                if (elements.adminName) {
+                    elements.adminName.textContent = user.email.split('@')[0];
+                }
             }
             
             // Initialize admin panel

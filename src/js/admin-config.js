@@ -30,7 +30,8 @@ export const ADMIN_EMAILS = [
     '230110313@itsoeh.edu.mx',
     '230110530@itsoeh.edu.mx',
     '230110581@itsoeh.edu.mx',
-    '230110579@itsoeh.edu.mx'
+    '230110579@itsoeh.edu.mx',
+    'joseecodm@gmail.com'
     // Agrega más emails aquí según sea necesario
     // 'profesor@itsoeh.edu.mx',
     // 'admin@itsoeh.edu.mx',
