@@ -388,6 +388,140 @@ body {
 }
 
 /* ================================
+   ADMIN FILTERS BAR
+================================ */
+.admin-filters-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+    padding: 16px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+}
+
+.admin-filters-bar .search-box {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0 16px;
+    transition: all 0.3s ease;
+}
+
+.admin-filters-bar .search-box:focus-within {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.admin-filters-bar .search-box i {
+    width: 18px;
+    height: 18px;
+    color: var(--text-tertiary);
+}
+
+.admin-filters-bar .search-box input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 12px 0;
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.admin-filters-bar .search-box input::placeholder {
+    color: var(--text-tertiary);
+}
+
+.admin-filters-bar .filter-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.admin-filters-bar .filter-group label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-secondary);
+    white-space: nowrap;
+}
+
+.admin-filters-bar .filter-group label i {
+    width: 16px;
+    height: 16px;
+}
+
+.admin-filters-bar .filter-select {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 8px 12px;
+    color: var(--text-primary);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 180px;
+}
+
+.admin-filters-bar .filter-select:hover {
+    border-color: var(--accent-color);
+}
+
+.admin-filters-bar .filter-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.admin-filters-bar .view-toggle {
+    display: flex;
+    gap: 4px;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    padding: 4px;
+    border: 1px solid var(--border-color);
+}
+
+.admin-filters-bar .view-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.admin-filters-bar .view-btn:hover {
+    background: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.admin-filters-bar .view-btn.active {
+    background: var(--accent-color);
+    color: white;
+}
+
+.admin-filters-bar .view-btn i {
+    width: 18px;
+    height: 18px;
+}
+
+/* ================================
    EXERCISES GRID
 ================================ */
 .exercises-grid {
@@ -543,6 +677,67 @@ body {
 
 .icon-btn.delete:hover {
     background: var(--danger-color);
+}
+
+/* List View for Admin */
+.exercises-grid.list-view {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.exercises-grid.list-view .exercise-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 24px;
+    cursor: default;
+    border-left: 3px solid transparent;
+}
+
+.exercises-grid.list-view .exercise-card:hover {
+    border-left-color: var(--accent-color);
+}
+
+.exercises-grid.list-view .exercise-card-header {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.exercises-grid.list-view .exercise-title {
+    margin: 0;
+    font-size: 15px;
+    min-width: 250px;
+    max-width: 250px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.exercises-grid.list-view .exercise-meta {
+    margin: 0;
+}
+
+.exercises-grid.list-view .exercise-description {
+    display: none;
+}
+
+.exercises-grid.list-view .exercise-author {
+    margin: 0;
+    flex: 0 0 auto;
+    font-size: 12px;
+}
+
+.exercises-grid.list-view .exercise-stats {
+    flex: 1;
+    padding: 0;
+    border: none;
+    margin: 0;
+}
+
+.exercises-grid.list-view .exercise-actions {
+    margin: 0;
+    flex: 0 0 auto;
 }
 
 /* ================================

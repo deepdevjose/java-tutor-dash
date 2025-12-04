@@ -74,6 +74,33 @@
 
             <!-- Exercises Section -->
             <section class="content-section active" id="exercises-section">
+                <!-- Search and Filters Bar -->
+                <div class="admin-filters-bar">
+                    <div class="search-box">
+                        <i data-feather="search"></i>
+                        <input type="text" id="adminSearchInput" placeholder="Buscar por título, autor o categoría...">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="authorFilter">
+                            <i data-feather="user"></i>
+                            Autor
+                        </label>
+                        <select id="authorFilter" class="filter-select">
+                            <option value="all">Todos los autores</option>
+                        </select>
+                    </div>
+                    
+                    <div class="view-toggle">
+                        <button class="view-btn active" id="adminGridViewBtn" data-view="grid" title="Vista de tarjetas">
+                            <i data-feather="grid"></i>
+                        </button>
+                        <button class="view-btn" id="adminListViewBtn" data-view="list" title="Vista de lista">
+                            <i data-feather="list"></i>
+                        </button>
+                    </div>
+                </div>
+                
                 <div class="exercises-grid" id="exercisesGrid">
                     <!-- Loading skeleton -->
                     <div class="skeleton-card"></div>

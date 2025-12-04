@@ -27,6 +27,8 @@ import {
 let currentUser = null;
 let isAdmin = false;
 let currentExerciseId = null;
+let allExercises = [];
+let filteredExercises = [];
 
 // ==========================================
 // DOM ELEMENTS
@@ -47,6 +49,12 @@ const elements = {
     // Exercises
     exercisesGrid: document.getElementById('exercisesGrid'),
     createExerciseBtn: document.getElementById('createExerciseBtn'),
+    
+    // Filters and Search
+    adminSearchInput: document.getElementById('adminSearchInput'),
+    authorFilter: document.getElementById('authorFilter'),
+    adminGridViewBtn: document.getElementById('adminGridViewBtn'),
+    adminListViewBtn: document.getElementById('adminListViewBtn'),
     
     // Modal
     exerciseModal: document.getElementById('exerciseModal'),
@@ -208,6 +216,37 @@ function setupEventListeners() {
         });
     }
     
+    // Search input
+    if (elements.adminSearchInput) {
+        elements.adminSearchInput.addEventListener('input', (e) => {
+            applyFilters();
+        });
+    }
+    
+    // Author filter
+    if (elements.authorFilter) {
+        elements.authorFilter.addEventListener('change', () => {
+            applyFilters();
+        });
+    }
+    
+    // View toggle buttons
+    if (elements.adminGridViewBtn) {
+        elements.adminGridViewBtn.addEventListener('click', () => {
+            setAdminView('grid');
+        });
+    }
+    
+    if (elements.adminListViewBtn) {
+        elements.adminListViewBtn.addEventListener('click', () => {
+            setAdminView('list');
+        });
+    }
+    
+    // Load saved view preference
+    const savedView = localStorage.getItem('adminExercisesView') || 'grid';
+    setAdminView(savedView);
+    
     // Restore sidebar state
     const sidebarCollapsed = localStorage.getItem('adminSidebarCollapsed') === 'true';
     if (sidebarCollapsed && elements.sidebar) {
@@ -275,14 +314,20 @@ async function loadExercises() {
     
     try {
         const exercisesSnapshot = await getDocs(collection(db, 'exercises'));
-        const exercises = [];
+        allExercises = [];
         
         exercisesSnapshot.forEach(doc => {
-            exercises.push({ id: doc.id, ...doc.data() });
+            allExercises.push({ id: doc.id, ...doc.data() });
         });
         
-        console.log(`✅ ${exercises.length} ejercicios cargados`);
-        renderExercises(exercises);
+        console.log(`✅ ${allExercises.length} ejercicios cargados`);
+        
+        // Populate author filter
+        populateAuthorFilter();
+        
+        // Initial render
+        filteredExercises = [...allExercises];
+        renderExercises(filteredExercises);
         
     } catch (error) {
         console.error('❌ Error al cargar ejercicios:', error);
@@ -353,6 +398,77 @@ function getDifficultyLabel(difficulty) {
         hard: 'Difícil'
     };
     return labels[difficulty] || difficulty;
+}
+
+// ==========================================
+// FILTERING AND SEARCH
+// ==========================================
+function populateAuthorFilter() {
+    if (!elements.authorFilter) return;
+    
+    // Get unique authors
+    const authors = [...new Set(allExercises
+        .map(ex => ex.author)
+        .filter(author => author)
+    )].sort();
+    
+    // Clear and populate filter
+    elements.authorFilter.innerHTML = '<option value="all">Todos los autores</option>';
+    authors.forEach(author => {
+        const option = document.createElement('option');
+        option.value = author;
+        option.textContent = author;
+        elements.authorFilter.appendChild(option);
+    });
+}
+
+function applyFilters() {
+    const searchTerm = elements.adminSearchInput?.value.toLowerCase().trim() || '';
+    const selectedAuthor = elements.authorFilter?.value || 'all';
+    
+    filteredExercises = allExercises.filter(exercise => {
+        // Search filter
+        const matchesSearch = !searchTerm || 
+            (exercise.title?.toLowerCase().includes(searchTerm)) ||
+            (exercise.author?.toLowerCase().includes(searchTerm)) ||
+            (exercise.category?.toLowerCase().includes(searchTerm)) ||
+            (exercise.description?.toLowerCase().includes(searchTerm));
+        
+        // Author filter
+        const matchesAuthor = selectedAuthor === 'all' || exercise.author === selectedAuthor;
+        
+        return matchesSearch && matchesAuthor;
+    });
+    
+    renderExercises(filteredExercises);
+}
+
+function setAdminView(viewType) {
+    if (!elements.exercisesGrid) return;
+    
+    // Update container class
+    if (viewType === 'list') {
+        elements.exercisesGrid.classList.add('list-view');
+    } else {
+        elements.exercisesGrid.classList.remove('list-view');
+    }
+    
+    // Update button states
+    if (elements.adminGridViewBtn && elements.adminListViewBtn) {
+        if (viewType === 'list') {
+            elements.adminGridViewBtn.classList.remove('active');
+            elements.adminListViewBtn.classList.add('active');
+        } else {
+            elements.adminGridViewBtn.classList.add('active');
+            elements.adminListViewBtn.classList.remove('active');
+        }
+    }
+    
+    // Save preference
+    localStorage.setItem('adminExercisesView', viewType);
+    
+    // Re-render to apply layout
+    feather.replace();
 }
 
 // ==========================================
