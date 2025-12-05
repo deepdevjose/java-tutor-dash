@@ -1,4 +1,19 @@
+# Maven
 target/
+
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Compiled files
 *.class
 *.log
+
+# OS
 .DS_Store
+
+# IDE
+.idea/
+*.iml
+.vscode/
