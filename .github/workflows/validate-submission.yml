@@ -143,20 +143,23 @@ jobs:
         run: |
           echo "🔍 Parseando resultados de tests..."
           
-          # Primero intentar leer desde XML de Gradle (más confiable)
-          XML_FILE="example/actions-ejemplo/build/test-results/test/TEST-com.javatutor.AppTest.xml"
+          # Encontrar el archivo XML (solo buscar el primero para acelerar)
+          XML_FILE=$(find example/actions-ejemplo/build/test-results/test -name "*.xml" -type f 2>/dev/null | head -n 1)
           
           if [ -f "$XML_FILE" ]; then
-            echo "✅ Archivo XML de resultados encontrado"
+            echo "✅ Archivo XML encontrado: $XML_FILE"
             
-            # Instalar xmllint si no está disponible
-            sudo apt-get update && sudo apt-get install -y libxml2-utils
+            # Usar grep/sed en lugar de xmllint (más rápido, no requiere instalar paquetes)
+            TESTS_RUN=$(grep -oP 'tests="\K[^"]+' "$XML_FILE" | head -1)
+            TESTS_FAILED=$(grep -oP 'failures="\K[^"]+' "$XML_FILE" | head -1)
+            TESTS_ERRORS=$(grep -oP 'errors="\K[^"]+' "$XML_FILE" | head -1)
+            TESTS_SKIPPED=$(grep -oP 'skipped="\K[^"]+' "$XML_FILE" | head -1)
             
-            # Extraer datos del XML
-            TESTS_RUN=$(xmllint --xpath "string(//testsuite/@tests)" "$XML_FILE" 2>/dev/null || echo "0")
-            TESTS_FAILED=$(xmllint --xpath "string(//testsuite/@failures)" "$XML_FILE" 2>/dev/null || echo "0")
-            TESTS_ERRORS=$(xmllint --xpath "string(//testsuite/@errors)" "$XML_FILE" 2>/dev/null || echo "0")
-            TESTS_SKIPPED=$(xmllint --xpath "string(//testsuite/@skipped)" "$XML_FILE" 2>/dev/null || echo "0")
+            # Valores por defecto si están vacíos
+            TESTS_RUN=${TESTS_RUN:-0}
+            TESTS_FAILED=${TESTS_FAILED:-0}
+            TESTS_ERRORS=${TESTS_ERRORS:-0}
+            TESTS_SKIPPED=${TESTS_SKIPPED:-0}
             
             # Calcular tests pasados
             TESTS_PASSED=$((TESTS_RUN - TESTS_FAILED - TESTS_ERRORS - TESTS_SKIPPED))
@@ -183,10 +186,14 @@ jobs:
             else
               echo "status=failed" >> $GITHUB_OUTPUT
               
-              # Extraer mensaje de error del XML
-              ERROR_MSG=$(xmllint --xpath "//testcase/failure/text()" "$XML_FILE" 2>/dev/null || \
-                         xmllint --xpath "//testcase/error/text()" "$XML_FILE" 2>/dev/null || \
-                         echo "Tests fallaron sin mensaje de error")
+              # Extraer mensaje de error del XML (usando grep/sed, más rápido)
+              ERROR_MSG=$(grep -oP '<failure[^>]*>\K[^<]+' "$XML_FILE" 2>/dev/null | head -1)
+              if [ -z "$ERROR_MSG" ]; then
+                ERROR_MSG=$(grep -oP '<error[^>]*>\K[^<]+' "$XML_FILE" 2>/dev/null | head -1)
+              fi
+              if [ -z "$ERROR_MSG" ]; then
+                ERROR_MSG="Tests fallaron sin mensaje de error"
+              fi
               
               # Limitar longitud del error
               ERROR_MSG="${ERROR_MSG:0:500}"
