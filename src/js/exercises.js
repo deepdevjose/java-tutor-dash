@@ -22,6 +22,7 @@ import {
     serverTimestamp,
     onSnapshot
 } from 'https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js';
+import { incrementStat } from './stats-updater.js';
 
 // ==========================================
 // GLOBAL STATE
@@ -32,6 +33,11 @@ let currentExercise = null;
 let currentSubmissionId = null;
 let resultsListener = null;
 let autoSaveTimeout = null;
+
+// Cache configuration
+const EXERCISES_CACHE_KEY = 'exercises_cache_v1';
+const EXERCISES_CACHE_TTL = 10 * 60 * 1000; // 10 minutos
+const USER_PROGRESS_CACHE_TTL = 60 * 1000; // 1 minuto
 
 // ==========================================
 // DOM ELEMENTS
@@ -225,10 +231,27 @@ async function loadExercises() {
     try {
         console.log('📚 Cargando ejercicios...');
         
+        // Intentar cargar del caché
+        try {
+            const cached = localStorage.getItem(EXERCISES_CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < EXERCISES_CACHE_TTL) {
+                    console.log('📦 Cargando ejercicios desde caché');
+                    allExercises = data;
+                    await loadUserProgress();
+                    return;
+                }
+            }
+        } catch (cacheError) {
+            console.warn('⚠️ Error al leer caché:', cacheError);
+        }
+        
+        console.log('🔄 Cargando ejercicios desde Firestore');
         const exercisesRef = collection(db, 'exercises');
         console.log('✅ Referencia a colección creada');
         
-        // Cargar todos los documentos (sin filtro)
+        // Cargar todos los documentos
         const snapshot = await getDocs(exercisesRef);
         console.log('✅ Snapshot obtenido, documentos:', snapshot.size);
         
@@ -277,6 +300,17 @@ async function loadExercises() {
         console.log(`✅ ${allExercises.length} ejercicios cargados`);
         console.log('📋 Ejercicios:', allExercises);
         
+        // Guardar en caché
+        try {
+            localStorage.setItem(EXERCISES_CACHE_KEY, JSON.stringify({
+                data: allExercises,
+                timestamp: Date.now()
+            }));
+            console.log('📦 Ejercicios guardados en caché');
+        } catch (cacheError) {
+            console.warn('⚠️ Error al guardar caché:', cacheError);
+        }
+        
         // Cargar progreso del usuario
         await loadUserProgress();
         
@@ -291,17 +325,56 @@ async function loadExercises() {
 // ==========================================
 async function loadUserProgress() {
     try {
+        const cacheKey = `user_progress_${currentUser.uid}`;
+        
+        // Intentar cargar del caché
+        try {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) {
+                const { completedIds, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < USER_PROGRESS_CACHE_TTL) {
+                    console.log('📦 Cargando progreso desde caché');
+                    const completedExercises = new Set(completedIds);
+                    allExercises.forEach(exercise => {
+                        exercise.completed = completedExercises.has(exercise.id);
+                    });
+                    console.log(`✅ ${completedIds.length} ejercicios completados (caché)`);
+                    return;
+                }
+            }
+        } catch (cacheError) {
+            console.warn('⚠️ Error al leer caché de progreso:', cacheError);
+        }
+        
+        console.log('🔄 Cargando progreso desde Firestore');
         const resultsRef = collection(db, 'results');
-        const q = query(resultsRef, where('userId', '==', currentUser.uid));
+        const q = query(
+            resultsRef, 
+            where('userId', '==', currentUser.uid),
+            where('status', '==', 'success')
+        );
         const snapshot = await getDocs(q);
         
+        const completedIds = [];
         const completedExercises = new Set();
         snapshot.forEach((doc) => {
             const result = doc.data();
-            if (result.status === 'success') {
-                completedExercises.add(result.exerciseId);
+            const exerciseId = result.exerciseId;
+            if (!completedExercises.has(exerciseId)) {
+                completedExercises.add(exerciseId);
+                completedIds.push(exerciseId);
             }
         });
+        
+        // Guardar en caché
+        try {
+            localStorage.setItem(cacheKey, JSON.stringify({
+                completedIds,
+                timestamp: Date.now()
+            }));
+        } catch (cacheError) {
+            console.warn('⚠️ Error al guardar caché de progreso:', cacheError);
+        }
         
         // Marcar ejercicios como completados
         allExercises.forEach(exercise => {
@@ -678,6 +751,9 @@ async function submitCode() {
         
         console.log('✅ Submission guardada:', currentSubmissionId);
         
+        // Incrementar contador de submissions en stats
+        incrementStat('totalSubmissions').catch(err => console.warn('⚠️ Stat update:', err));
+        
         // 2. Obtener token de GitHub desde Firestore
         const configDoc = await getDoc(doc(db, 'config', 'github'));
         if (!configDoc.exists()) {
@@ -801,6 +877,14 @@ function displayResults(result) {
         // Actualizar estado del ejercicio
         currentExercise.completed = true;
         renderExercises();
+        
+        // Invalidar caché de progreso
+        const cacheKey = `user_progress_${currentUser.uid}`;
+        localStorage.removeItem(cacheKey);
+        console.log('🗑️ Caché de progreso invalidado');
+        
+        // Incrementar contador de resultados exitosos en stats
+        incrementStat('successCount').catch(err => console.warn('⚠️ Stat update:', err));
         
         showToast('success', '¡Ejercicio completado!', `Has ganado ${currentExercise.points} puntos`);
         

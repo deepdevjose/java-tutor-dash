@@ -31,3 +31,7 @@ export const auth = getAuth(app);
  * @type {import('firebase/firestore').Firestore}
  */
 export const db = getFirestore(app);
+
+// Inicializar sistema de stats agregados (solo una vez al cargar la app)
+import { initializeStats } from './stats-updater.js';
+initializeStats().catch(err => console.warn('⚠️ Stats initialization:', err));

@@ -20,6 +20,7 @@ import {
     limit,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
+import { tryUpdateStats, incrementStat } from './stats-updater.js';
 
 // ==========================================
 // GLOBAL STATE
@@ -29,6 +30,10 @@ let isAdmin = false;
 let currentExerciseId = null;
 let allExercises = [];
 let filteredExercises = [];
+
+// Cache configuration
+const ADMIN_EXERCISES_CACHE_KEY = 'admin_exercises_cache_v1';
+const ADMIN_EXERCISES_CACHE_TTL = 2 * 60 * 1000; // 2 minutos (más corto para admins)
 
 // ==========================================
 // DOM ELEMENTS
@@ -170,6 +175,10 @@ async function checkAdminAccess(user) {
 function initializeAdminPanel() {
     console.log('✅ Inicializando panel de administración');
     loadExercises();
+    
+    // Intentar actualizar stats agregados en segundo plano
+    tryUpdateStats().catch(err => console.warn('⚠️ Stats update:', err));
+    
     loadStats();
 }
 
@@ -301,7 +310,7 @@ function switchSection(sectionName) {
     
     // Load section data
     if (sectionName === 'users') {
-        loadUsers();
+        // loadUsers(); // DESHABILITADO: Sección de usuarios removida
     } else if (sectionName === 'analytics') {
         loadStats();
     }
@@ -314,6 +323,25 @@ async function loadExercises() {
     console.log('📚 Cargando ejercicios...');
     
     try {
+        // Intentar cargar del caché (solo para lectura rápida)
+        try {
+            const cached = localStorage.getItem(ADMIN_EXERCISES_CACHE_KEY);
+            if (cached) {
+                const { data, timestamp } = JSON.parse(cached);
+                if (Date.now() - timestamp < ADMIN_EXERCISES_CACHE_TTL) {
+                    console.log('📦 Cargando ejercicios desde caché');
+                    allExercises = data;
+                    populateAuthorFilter();
+                    filteredExercises = [...allExercises];
+                    renderExercises(filteredExercises);
+                    return;
+                }
+            }
+        } catch (cacheError) {
+            console.warn('⚠️ Error al leer caché:', cacheError);
+        }
+        
+        console.log('🔄 Cargando ejercicios desde Firestore');
         const exercisesSnapshot = await getDocs(collection(db, 'exercises'));
         allExercises = [];
         
@@ -322,6 +350,16 @@ async function loadExercises() {
         });
         
         console.log(`✅ ${allExercises.length} ejercicios cargados`);
+        
+        // Guardar en caché
+        try {
+            localStorage.setItem(ADMIN_EXERCISES_CACHE_KEY, JSON.stringify({
+                data: allExercises,
+                timestamp: Date.now()
+            }));
+        } catch (cacheError) {
+            console.warn('⚠️ Error al guardar caché:', cacheError);
+        }
         
         // Populate author filter
         populateAuthorFilter();
@@ -605,11 +643,19 @@ async function handleExerciseSubmit(e) {
             
             const docRef = await addDoc(collection(db, 'exercises'), exerciseData);
             console.log('✅ Ejercicio creado:', docRef.id);
+            
+            // Incrementar contador de ejercicios en stats
+            incrementStat('totalExercises').catch(err => console.warn('⚠️ Stat update:', err));
+            
             showToast('success', 'Éxito', 'Ejercicio creado correctamente');
         }
         
         // Reload exercises and close modal
         await loadExercises();
+        
+        // Invalidar caché
+        localStorage.removeItem(ADMIN_EXERCISES_CACHE_KEY);
+        
         closeExerciseModal();
         
     } catch (error) {
@@ -643,6 +689,13 @@ window.deleteExercise = async function(exerciseId) {
     try {
         await deleteDoc(doc(db, 'exercises', exerciseId));
         console.log('✅ Ejercicio eliminado:', exerciseId);
+        
+        // Decrementar contador de ejercicios en stats
+        incrementStat('totalExercises', -1).catch(err => console.warn('⚠️ Stat update:', err));
+        
+        // Invalidar caché
+        localStorage.removeItem(ADMIN_EXERCISES_CACHE_KEY);
+        
         showToast('success', 'Éxito', 'Ejercicio eliminado correctamente');
         loadExercises();
     } catch (error) {
@@ -654,57 +707,112 @@ window.deleteExercise = async function(exerciseId) {
 // ==========================================
 // LOAD STATS
 // ==========================================
+let statsCache = null;
+let statsCacheTime = 0;
+const STATS_CACHE_TTL = 2 * 60 * 1000; // 2 minutos
+
 async function loadStats() {
     try {
-        // Total users
-        const usersSnapshot = await getDocs(collection(db, 'usuarios'));
-        document.getElementById('totalUsers').textContent = usersSnapshot.size;
+        const now = Date.now();
         
-        // Total exercises
-        const exercisesSnapshot = await getDocs(collection(db, 'exercises'));
-        document.getElementById('totalExercises').textContent = exercisesSnapshot.size;
+        // Usar caché si tiene menos de 2 minutos
+        if (statsCache && (now - statsCacheTime) < STATS_CACHE_TTL) {
+            updateStatsUI(statsCache);
+            return;
+        }
         
-        // Total submissions
-        const submissionsSnapshot = await getDocs(collection(db, 'submissions'));
-        document.getElementById('totalSubmissions').textContent = submissionsSnapshot.size;
+        // Intentar cargar documento de stats agregados
+        try {
+            const statsDoc = await getDoc(doc(db, 'stats', 'general'));
+            
+            if (statsDoc.exists()) {
+                const stats = statsDoc.data();
+                statsCache = stats;
+                statsCacheTime = now;
+                updateStatsUI(stats);
+                return;
+            }
+        } catch (error) {
+            console.warn('⚠️ No se encontró documento de stats, calculando...');
+        }
         
-        // Success rate
-        const resultsSnapshot = await getDocs(collection(db, 'results'));
+        // Fallback: calcular manualmente (costoso)
+        console.log('📊 Calculando estadísticas...');
+        showToast('info', 'Calculando...', 'Esto puede tardar un momento');
+        
+        // Usar Promise.all para cargar en paralelo
+        const [usersSnapshot, exercisesSnapshot, submissionsSnapshot, resultsSnapshot] = await Promise.all([
+            getDocs(collection(db, 'usuarios')),
+            getDocs(collection(db, 'exercises')),
+            getDocs(collection(db, 'submissions')),
+            getDocs(collection(db, 'results'))
+        ]);
+        
         let successCount = 0;
         resultsSnapshot.forEach(doc => {
             if (doc.data().status === 'success') {
                 successCount++;
             }
         });
-        const successRate = resultsSnapshot.size > 0 
-            ? Math.round((successCount / resultsSnapshot.size) * 100) 
-            : 0;
-        document.getElementById('successRate').textContent = successRate + '%';
+        
+        const stats = {
+            totalUsers: usersSnapshot.size,
+            totalExercises: exercisesSnapshot.size,
+            totalSubmissions: submissionsSnapshot.size,
+            successCount: successCount,
+            totalResults: resultsSnapshot.size,
+            successRate: resultsSnapshot.size > 0 ? Math.round((successCount / resultsSnapshot.size) * 100) : 0
+        };
+        
+        statsCache = stats;
+        statsCacheTime = now;
+        updateStatsUI(stats);
         
     } catch (error) {
         console.error('❌ Error al cargar estadísticas:', error);
     }
 }
 
+function updateStatsUI(stats) {
+    document.getElementById('totalUsers').textContent = stats.totalUsers || 0;
+    document.getElementById('totalExercises').textContent = stats.totalExercises || 0;
+    document.getElementById('totalSubmissions').textContent = stats.totalSubmissions || 0;
+    document.getElementById('successRate').textContent = (stats.successRate || 0) + '%';
+}
+
 // ==========================================
-// LOAD USERS
+// LOAD USERS - DESHABILITADO (Sección removida del admin panel)
 // ==========================================
-async function loadUsers() {
+/*
+let currentUsersPage = 0;
+const USERS_PER_PAGE = 20;
+
+async function loadUsers(page = 0) {
     try {
-        const usersSnapshot = await getDocs(collection(db, 'usuarios'));
+        // Usar limit para paginación
+        const usersQuery = query(
+            collection(db, 'usuarios'),
+            orderBy('createdAt', 'desc'),
+            limit(USERS_PER_PAGE)
+        );
+        
+        const usersSnapshot = await getDocs(usersQuery);
         const users = [];
         
         usersSnapshot.forEach(doc => {
             users.push({ id: doc.id, ...doc.data() });
         });
         
-        renderUsers(users);
+        currentUsersPage = page;
+        renderUsers(users, page);
     } catch (error) {
         console.error('❌ Error al cargar usuarios:', error);
         showToast('error', 'Error', 'No se pudieron cargar los usuarios');
     }
 }
+*/
 
+/*
 function renderUsers(users) {
     const tbody = document.getElementById('usersTableBody');
     if (!tbody) return;
@@ -734,18 +842,22 @@ function renderUsers(users) {
     
     feather.replace();
 }
+*/
 
 // ==========================================
-// VIEW USER DETAILS
+// VIEW USER DETAILS - DESHABILITADO
 // ==========================================
+/*
 window.viewUserDetails = async function(userId) {
     console.log('👁️ Ver detalles de usuario:', userId);
     showToast('info', 'Información', 'Funcionalidad en desarrollo');
 };
+*/
 
 // ==========================================
-// DELETE USER
+// DELETE USER - DESHABILITADO
 // ==========================================
+/*
 window.deleteUser = async function(userId, userEmail) {
     if (!isAdmin) {
         showToast('error', 'Acceso Denegado', 'No tienes permisos para realizar esta acción');
@@ -876,13 +988,14 @@ window.deleteUser = async function(userId, userEmail) {
         showToast('success', 'Usuario Eliminado', summary);
 
         // Recargar lista de usuarios
-        loadUsers();
+        // loadUsers(); // DESHABILITADO
 
     } catch (error) {
         console.error('❌ Error al eliminar usuario:', error);
         showToast('error', 'Error', `No se pudo eliminar el usuario: ${error.message}`);
     }
 };
+*/
 
 // ==========================================
 // TOAST NOTIFICATIONS
