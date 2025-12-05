@@ -17,6 +17,7 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
+          cache: 'gradle'
       
       - name: Display received payload
         run: |
@@ -84,7 +85,7 @@ jobs:
         run: |
           echo "📂 Verificando estructura del proyecto..."
           ls -la example/actions-ejemplo/ || echo "❌ No existe example/actions-ejemplo/"
-          ls -la example/actions-ejemplo/pom.xml || echo "❌ No existe pom.xml"
+          ls -la example/actions-ejemplo/build.gradle || echo "❌ No existe build.gradle"
           ls -la example/actions-ejemplo/src/test/java/com/javatutor/ || echo "❌ No existen tests"
       
       - name: Create student code file
@@ -117,56 +118,114 @@ jobs:
           echo "📄 Contenido de App.java:"
           cat example/actions-ejemplo/src/main/java/com/javatutor/App.java
       
-      - name: Run Maven tests
-        id: maven_test
+      - name: Run Gradle tests
+        id: gradle_test
         continue-on-error: true
         working-directory: example/actions-ejemplo
         run: |
-          echo "🧪 Ejecutando tests de Maven..."
-          mvn clean test -B 2>&1 | tee test_output.log
+          echo "🧪 Ejecutando tests con Gradle..."
+          
+          # Hacer ejecutable el gradlew (por si acaso)
+          chmod +x gradlew
+          
+          # Ejecutar tests y capturar salida
+          ./gradlew test --no-daemon --console=plain --stacktrace 2>&1 | tee test_output.log
           exit_code=${PIPESTATUS[0]}
           echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
           echo "📄 Moviendo archivo de salida..."
           mv test_output.log ../../test_output.log
+          
+          echo "📁 Archivos generados por Gradle:"
+          ls -la build/test-results/test/ || echo "⚠️ No se generaron resultados de tests"
       
       - name: Parse test results
         id: parse_results
         run: |
           echo "🔍 Parseando resultados de tests..."
-          if [ -f test_output.log ]; then
-            echo "✅ Archivo test_output.log encontrado"
+          
+          # Primero intentar leer desde XML de Gradle (más confiable)
+          XML_FILE="example/actions-ejemplo/build/test-results/test/TEST-com.javatutor.AppTest.xml"
+          
+          if [ -f "$XML_FILE" ]; then
+            echo "✅ Archivo XML de resultados encontrado"
             
-            # Verificar si hubo error de compilación
-            if grep -q "COMPILATION ERROR" test_output.log; then
+            # Instalar xmllint si no está disponible
+            sudo apt-get update && sudo apt-get install -y libxml2-utils
+            
+            # Extraer datos del XML
+            TESTS_RUN=$(xmllint --xpath "string(//testsuite/@tests)" "$XML_FILE" 2>/dev/null || echo "0")
+            TESTS_FAILED=$(xmllint --xpath "string(//testsuite/@failures)" "$XML_FILE" 2>/dev/null || echo "0")
+            TESTS_ERRORS=$(xmllint --xpath "string(//testsuite/@errors)" "$XML_FILE" 2>/dev/null || echo "0")
+            TESTS_SKIPPED=$(xmllint --xpath "string(//testsuite/@skipped)" "$XML_FILE" 2>/dev/null || echo "0")
+            
+            # Calcular tests pasados
+            TESTS_PASSED=$((TESTS_RUN - TESTS_FAILED - TESTS_ERRORS - TESTS_SKIPPED))
+            
+            echo "📊 Resultados extraídos del XML:"
+            echo "  Tests run: $TESTS_RUN"
+            echo "  Tests passed: $TESTS_PASSED"
+            echo "  Tests failed: $TESTS_FAILED"
+            echo "  Tests errors: $TESTS_ERRORS"
+            
+            echo "tests_run=$TESTS_RUN" >> $GITHUB_OUTPUT
+            echo "tests_passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
+            echo "tests_failed=$TESTS_FAILED" >> $GITHUB_OUTPUT
+            
+            # Determinar status
+            if [ "$TESTS_FAILED" -eq "0" ] && [ "$TESTS_ERRORS" -eq "0" ] && [ "$TESTS_RUN" -gt "0" ]; then
+              echo "status=success" >> $GITHUB_OUTPUT
+              echo "error_report=" >> $GITHUB_OUTPUT
+              echo "✅ Todos los tests pasaron"
+            elif [ "$TESTS_RUN" -eq "0" ]; then
+              echo "status=error" >> $GITHUB_OUTPUT
+              echo "error_report=No se ejecutaron tests" >> $GITHUB_OUTPUT
+              echo "⚠️ No se ejecutaron tests"
+            else
+              echo "status=failed" >> $GITHUB_OUTPUT
+              
+              # Extraer mensaje de error del XML
+              ERROR_MSG=$(xmllint --xpath "//testcase/failure/text()" "$XML_FILE" 2>/dev/null || \
+                         xmllint --xpath "//testcase/error/text()" "$XML_FILE" 2>/dev/null || \
+                         echo "Tests fallaron sin mensaje de error")
+              
+              # Limitar longitud del error
+              ERROR_MSG="${ERROR_MSG:0:500}"
+              ERROR_MSG=$(echo "$ERROR_MSG" | sed 's/"/\\"/g' | tr '\n' ' ')
+              
+              echo "error_report=$ERROR_MSG" >> $GITHUB_OUTPUT
+              echo "❌ Tests fallaron: $ERROR_MSG"
+            fi
+            
+          elif [ -f test_output.log ]; then
+            echo "⚠️ XML no encontrado, parseando desde test_output.log"
+            
+            # Verificar si hubo error de compilación (Gradle)
+            if grep -q "Compilation failed" test_output.log || grep -q "FAILURE: Build failed" test_output.log; then
               echo "❌ Error de compilación detectado"
               echo "status=error" >> $GITHUB_OUTPUT
               echo "tests_run=0" >> $GITHUB_OUTPUT
               echo "tests_passed=0" >> $GITHUB_OUTPUT
               echo "tests_failed=0" >> $GITHUB_OUTPUT
               
-              ERROR_REPORT=$(grep -A 10 "COMPILATION ERROR" test_output.log | head -n 20)
+              ERROR_REPORT=$(grep -A 15 "error:" test_output.log | head -n 20)
               ERROR_REPORT="${ERROR_REPORT:0:500}"
               ERROR_REPORT=$(echo "$ERROR_REPORT" | sed 's/"/\\"/g' | tr '\n' ' ')
               echo "error_report=Error de compilación: $ERROR_REPORT" >> $GITHUB_OUTPUT
             else
-              # Extraer información de tests
-              TESTS_RUN=$(grep -oP 'Tests run: \K\d+' test_output.log | head -1 || echo "0")
-              TESTS_FAILED=$(grep -oP 'Failures: \K\d+' test_output.log | head -1 || echo "0")
-              TESTS_ERRORS=$(grep -oP 'Errors: \K\d+' test_output.log | head -1 || echo "0")
+              # Intentar extraer de output de Gradle
+              # Gradle output: "5 tests completed, 2 failed"
+              TESTS_RUN=$(grep -oP '\K\d+(?= tests? completed)' test_output.log | head -1 || echo "0")
+              TESTS_FAILED=$(grep -oP '\K\d+(?= failed)' test_output.log | head -1 || echo "0")
               
-              # Asegurar que sean números
               TESTS_RUN=${TESTS_RUN:-0}
               TESTS_FAILED=${TESTS_FAILED:-0}
-              TESTS_ERRORS=${TESTS_ERRORS:-0}
-              
-              TESTS_PASSED=$((TESTS_RUN - TESTS_FAILED - TESTS_ERRORS))
+              TESTS_PASSED=$((TESTS_RUN - TESTS_FAILED))
               
               echo "tests_run=$TESTS_RUN" >> $GITHUB_OUTPUT
               echo "tests_passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
               echo "tests_failed=$TESTS_FAILED" >> $GITHUB_OUTPUT
               
-              # Determinar status
-              if [ "$TESTS_FAILED" -eq "0" ] && [ "$TESTS_ERRORS" -eq "0" ] && [ "$TESTS_RUN" -gt "0" ]; then
+              if [ "$TESTS_FAILED" -eq "0" ] && [ "$TESTS_RUN" -gt "0" ]; then
                 echo "status=success" >> $GITHUB_OUTPUT
                 echo "error_report=" >> $GITHUB_OUTPUT
               elif [ "$TESTS_RUN" -eq "0" ]; then
@@ -174,16 +233,16 @@ jobs:
                 echo "error_report=No se ejecutaron tests" >> $GITHUB_OUTPUT
               else
                 echo "status=failed" >> $GITHUB_OUTPUT
-                ERROR_REPORT=$(grep -A 10 "FAILURE" test_output.log | head -n 20)
+                ERROR_REPORT=$(grep -A 10 "FAILED" test_output.log | head -n 20)
                 ERROR_REPORT="${ERROR_REPORT:0:500}"
                 ERROR_REPORT=$(echo "$ERROR_REPORT" | sed 's/"/\\"/g' | tr '\n' ' ')
                 echo "error_report=$ERROR_REPORT" >> $GITHUB_OUTPUT
               fi
             fi
           else
-            echo "❌ No se encontró archivo de resultados"
+            echo "❌ No se encontraron archivos de resultados"
             echo "status=error" >> $GITHUB_OUTPUT
-            echo "error_report=No se encontró archivo de resultados" >> $GITHUB_OUTPUT
+            echo "error_report=No se encontraron archivos de resultados" >> $GITHUB_OUTPUT
             echo "tests_run=0" >> $GITHUB_OUTPUT
             echo "tests_passed=0" >> $GITHUB_OUTPUT
             echo "tests_failed=0" >> $GITHUB_OUTPUT

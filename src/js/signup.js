@@ -3,6 +3,7 @@ import { auth, db } from './firebase-init.js';
 import { createUserWithEmailAndPassword, sendEmailVerification } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-auth.js";
 import { doc, setDoc, runTransaction, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
 import { isAdminEmail, DEFAULT_ADMIN_PERMISSIONS } from './admin-config.js';
+import { incrementStat } from './stats-updater.js';
 
 /**
  * @file signup.js
@@ -583,6 +584,10 @@ async function reserveUniqueIdentifiers(uid, githubUsername, matricula, userData
 
             logDebug('✅ Transacción completada: identificadores reservados y usuario creado');
         });
+        
+        // Incrementar contador de usuarios en stats (después de la transacción)
+        incrementStat('totalUsers').catch(err => console.warn('⚠️ Stat update:', err));
+        
     } catch (error) {
         // Propagar errores de transacción
         if (error.message.includes('GitHub username ya está en uso')) {

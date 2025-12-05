@@ -54,8 +54,57 @@ const logError = (...args) => {
 // --- ESTADO GLOBAL Y CLEANUP ---
 let unsubscribeSnapshot = null;
 let unsubscribeAuth = null;
+let unsubscribeStats = null; // Para estadísticas de ejercicios
+let unsubscribeSubmissions = null; // Para envíos recientes
 let inactivityListeners = [];
 let avatarCache = new Map(); // Cache para avatares de GitHub
+
+// Cache de ejercicios para evitar lecturas repetidas
+let exercisesCache = null;
+let exercisesCacheTime = 0;
+const EXERCISES_CACHE_TTL = 5 * 60 * 1000; // 5 minutos
+
+// Cache de nombres de ejercicios en localStorage
+function getExerciseNameFromCache(exerciseId) {
+    try {
+        const cached = localStorage.getItem(`exercise_name_${exerciseId}`);
+        if (cached) {
+            const { name, timestamp } = JSON.parse(cached);
+            if (Date.now() - timestamp < 3600000) { // 1 hora
+                return name;
+            }
+        }
+    } catch (e) {
+        logError('Error al leer caché:', e);
+    }
+    return null;
+}
+
+function setExerciseNameCache(exerciseId, name) {
+    try {
+        localStorage.setItem(`exercise_name_${exerciseId}`, JSON.stringify({
+            name,
+            timestamp: Date.now()
+        }));
+    } catch (e) {
+        logError('Error al guardar caché:', e);
+    }
+}
+
+// Función para obtener ejercicios con caché
+async function getExercisesWithCache() {
+    const now = Date.now();
+    if (exercisesCache && (now - exercisesCacheTime) < EXERCISES_CACHE_TTL) {
+        logDebug('📦 Usando caché de ejercicios');
+        return exercisesCache;
+    }
+    
+    logDebug('🔄 Recargando ejercicios desde Firestore');
+    const snapshot = await getDocs(collection(db, 'exercises'));
+    exercisesCache = snapshot;
+    exercisesCacheTime = now;
+    return snapshot;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -186,13 +235,19 @@ async function loadExerciseStatistics(uid) {
     logInfo("📈 Cargando estadísticas de ejercicios para UID:", uid);
 
     try {
+        // Desuscribir listener anterior si existe
+        if (unsubscribeStats) {
+            unsubscribeStats();
+            unsubscribeStats = null;
+        }
+
         // Listener en tiempo real para results del usuario
         const resultsQuery = query(
             collection(db, 'results'),
             where('userId', '==', uid)
         );
 
-        onSnapshot(resultsQuery, async (resultsSnapshot) => {
+        unsubscribeStats = onSnapshot(resultsQuery, async (resultsSnapshot) => {
             logDebug(`✅ ${resultsSnapshot.size} resultados encontrados`);
 
             // Agrupar resultados por exerciseId y quedarnos solo con el más reciente de cada uno
@@ -263,11 +318,13 @@ async function loadExerciseStatistics(uid) {
             const completedCount = completedExerciseIds.size;
             logDebug(`✅ Ejercicios completados exitosamente: ${completedCount}`);
 
-            // Obtener puntos de los ejercicios completados
+            // Obtener puntos de los ejercicios completados usando caché
             let totalPoints = 0;
+            let totalExercises = 0;
+            
             if (completedCount > 0) {
-                const exercisesQuery = query(collection(db, 'exercises'));
-                const exercisesSnapshot = await getDocs(exercisesQuery);
+                const exercisesSnapshot = await getExercisesWithCache();
+                totalExercises = exercisesSnapshot.size;
                 
                 exercisesSnapshot.forEach(doc => {
                     const exercise = doc.data();
@@ -284,13 +341,13 @@ async function loadExerciseStatistics(uid) {
                         totalPoints += points;
                     }
                 });
+            } else {
+                // Si no hay ejercicios completados, obtener solo el total
+                const exercisesSnapshot = await getExercisesWithCache();
+                totalExercises = exercisesSnapshot.size;
             }
 
             logDebug(`💰 Puntos totales calculados: ${totalPoints}`);
-
-            // Obtener total de ejercicios para calcular progreso
-            const totalExercisesSnapshot = await getDocs(collection(db, 'exercises'));
-            const totalExercises = totalExercisesSnapshot.size;
 
             // Calcular estadísticas
             const testsTotal = totalTestsPassed + totalTestsFailed;
@@ -346,13 +403,19 @@ async function loadRecentSubmissions(uid) {
     logInfo("📋 Cargando envíos recientes para UID:", uid);
 
     try {
+        // Desuscribir listener anterior si existe
+        if (unsubscribeSubmissions) {
+            unsubscribeSubmissions();
+            unsubscribeSubmissions = null;
+        }
+
         // Consultar los últimos 10 resultados del usuario, ordenados por fecha
         const resultsQuery = query(
             collection(db, 'results'),
             where('userId', '==', uid)
         );
 
-        onSnapshot(resultsQuery, async (resultsSnapshot) => {
+        unsubscribeSubmissions = onSnapshot(resultsQuery, async (resultsSnapshot) => {
             logDebug(`✅ ${resultsSnapshot.size} resultados encontrados`);
 
             // Convertir a array y ordenar por fecha (más reciente primero)
@@ -372,14 +435,34 @@ async function loadRecentSubmissions(uid) {
 
             logDebug(`📊 Mostrando ${recentResults.length} envíos recientes`);
 
-            // Obtener nombres de ejercicios
+            // Obtener nombres SOLO de los ejercicios necesarios
             const exerciseNames = new Map();
             if (recentResults.length > 0) {
-                const exercisesSnapshot = await getDocs(collection(db, 'exercises'));
-                exercisesSnapshot.forEach(doc => {
-                    const data = doc.data();
-                    exerciseNames.set(doc.id, data.title || data.name || `Ejercicio ${doc.id}`);
-                });
+                const exerciseIdsNeeded = [...new Set(recentResults.map(r => r.exerciseId))];
+                
+                for (const exerciseId of exerciseIdsNeeded) {
+                    // Intentar obtener del caché primero
+                    let name = getExerciseNameFromCache(exerciseId);
+                    
+                    if (!name) {
+                        // Solo si no está en caché, hacer lectura individual
+                        try {
+                            const exerciseDoc = await getDoc(doc(db, 'exercises', exerciseId));
+                            if (exerciseDoc.exists()) {
+                                const data = exerciseDoc.data();
+                                name = data.title || data.name || `Ejercicio ${exerciseId}`;
+                                setExerciseNameCache(exerciseId, name);
+                            }
+                        } catch (error) {
+                            logError(`Error al cargar ejercicio ${exerciseId}:`, error);
+                            name = `Ejercicio ${exerciseId}`;
+                        }
+                    }
+                    
+                    if (name) {
+                        exerciseNames.set(exerciseId, name);
+                    }
+                }
             }
 
             // Renderizar los envíos
@@ -826,6 +909,20 @@ function cleanupBeforeNavigation() {
         unsubscribeSnapshot();
         unsubscribeSnapshot = null;
         logDebug('✅ Snapshot listener limpiado');
+    }
+
+    // Desuscribirse de estadísticas
+    if (unsubscribeStats) {
+        unsubscribeStats();
+        unsubscribeStats = null;
+        logDebug('✅ Stats listener limpiado');
+    }
+
+    // Desuscribirse de envíos recientes
+    if (unsubscribeSubmissions) {
+        unsubscribeSubmissions();
+        unsubscribeSubmissions = null;
+        logDebug('✅ Submissions listener limpiado');
     }
     
     if (unsubscribeAuth) {
