@@ -1,0 +1,221 @@
+name: Validate Java Exercise
+
+on:
+  repository_dispatch:
+    types: [validate_submission]
+
+jobs:
+  test-and-report:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Java 11
+        uses: actions/setup-java@v4
+        with:
+          java-version: '11'
+          distribution: 'temurin'
+      
+      - name: Display received payload
+        run: |
+          echo "Submission ID: ${{ github.event.client_payload.submissionId }}"
+          echo "Exercise ID: ${{ github.event.client_payload.exerciseId }}"
+          echo "User ID: ${{ github.event.client_payload.userId }}"
+      
+      - name: Fetch exercise test code from Firestore
+        id: fetch_test
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          echo "📥 Obteniendo código de test desde Firestore..."
+          echo "🔑 Project ID: $FIREBASE_PROJECT_ID"
+          echo "📝 Exercise ID: ${{ github.event.client_payload.exerciseId }}"
+          
+          EXERCISE_RESPONSE=$(curl -s \
+            "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT_ID/databases/(default)/documents/exercises/${{ github.event.client_payload.exerciseId }}")
+          
+          # Debug: mostrar respuesta completa
+          echo "🔍 Respuesta de Firestore (primeros 500 caracteres):"
+          echo "$EXERCISE_RESPONSE" | head -c 500
+          echo ""
+          echo "---"
+          
+          # Verificar si hay error en la respuesta
+          ERROR_CODE=$(echo "$EXERCISE_RESPONSE" | jq -r '.error.code // empty')
+          if [ ! -z "$ERROR_CODE" ]; then
+            echo "❌ Error de Firestore: $ERROR_CODE"
+            echo "$EXERCISE_RESPONSE" | jq '.error'
+            exit 1
+          fi
+          
+          # Extract testCode field from Firestore response
+          TEST_CODE=$(echo "$EXERCISE_RESPONSE" | jq -r '.fields.testCode.stringValue // empty')
+          
+          echo "📏 Longitud del testCode: ${#TEST_CODE}"
+          
+          # Si no hay testCode, intentar con tests (viejo formato)
+          if [ -z "$TEST_CODE" ]; then
+            echo "⚠️ No se encontró campo 'testCode'"
+            echo "🔍 Campos disponibles en el documento:"
+            echo "$EXERCISE_RESPONSE" | jq '.fields | keys'
+            
+            # Usar el test por defecto que ya existe en el repo
+            if [ ! -f "example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java" ]; then
+              echo "❌ No se encontró código de test para este ejercicio"
+              exit 1
+            fi
+            echo "✅ Usando test existente en el repositorio"
+          else
+            # Create test directory
+            mkdir -p example/actions-ejemplo/src/test/java/com/javatutor
+            
+            # Write test code to AppTest.java
+            echo "$TEST_CODE" > example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java
+            
+            echo "✅ Test descargado y guardado desde Firestore"
+          fi
+          
+          echo "📄 Contenido del test:"
+          cat example/actions-ejemplo/src/test/java/com/javatutor/AppTest.java
+      
+      - name: Verify project structure
+        run: |
+          echo "📂 Verificando estructura del proyecto..."
+          ls -la example/actions-ejemplo/ || echo "❌ No existe example/actions-ejemplo/"
+          ls -la example/actions-ejemplo/pom.xml || echo "❌ No existe pom.xml"
+          ls -la example/actions-ejemplo/src/test/java/com/javatutor/ || echo "❌ No existen tests"
+      
+      - name: Create student code file
+        run: |
+          echo "📝 Creando archivo con código del estudiante..."
+          
+          # Borrar App.java existente para evitar conflictos
+          rm -f example/actions-ejemplo/src/main/java/com/javatutor/App.java
+          
+          # Crear directorio
+          mkdir -p example/actions-ejemplo/src/main/java/com/javatutor
+          
+          # Guardar el código del estudiante
+          cat > example/actions-ejemplo/src/main/java/com/javatutor/App.java << 'EOFCODE'
+          ${{ github.event.client_payload.studentCode }}
+          EOFCODE
+          
+          echo "✅ Código del estudiante guardado:"
+          cat example/actions-ejemplo/src/main/java/com/javatutor/App.java
+          echo "📏 Número de líneas:"
+          wc -l example/actions-ejemplo/src/main/java/com/javatutor/App.java
+      
+      - name: Verify files before compilation
+        run: |
+          echo "🔍 Verificando archivos antes de compilar..."
+          echo "📁 Archivos en src/main/java/com/javatutor/:"
+          ls -la example/actions-ejemplo/src/main/java/com/javatutor/
+          echo "📁 Archivos en src/test/java/com/javatutor/:"
+          ls -la example/actions-ejemplo/src/test/java/com/javatutor/
+          echo "📄 Contenido de App.java:"
+          cat example/actions-ejemplo/src/main/java/com/javatutor/App.java
+      
+      - name: Run Maven tests
+        id: maven_test
+        continue-on-error: true
+        working-directory: example/actions-ejemplo
+        run: |
+          echo "🧪 Ejecutando tests de Maven..."
+          mvn clean test -B 2>&1 | tee test_output.log
+          exit_code=${PIPESTATUS[0]}
+          echo "exit_code=$exit_code" >> $GITHUB_OUTPUT
+          echo "📄 Moviendo archivo de salida..."
+          mv test_output.log ../../test_output.log
+      
+      - name: Parse test results
+        id: parse_results
+        run: |
+          echo "🔍 Parseando resultados de tests..."
+          if [ -f test_output.log ]; then
+            echo "✅ Archivo test_output.log encontrado"
+            
+            # Verificar si hubo error de compilación
+            if grep -q "COMPILATION ERROR" test_output.log; then
+              echo "❌ Error de compilación detectado"
+              echo "status=error" >> $GITHUB_OUTPUT
+              echo "tests_run=0" >> $GITHUB_OUTPUT
+              echo "tests_passed=0" >> $GITHUB_OUTPUT
+              echo "tests_failed=0" >> $GITHUB_OUTPUT
+              
+              ERROR_REPORT=$(grep -A 10 "COMPILATION ERROR" test_output.log | head -n 20)
+              ERROR_REPORT="${ERROR_REPORT:0:500}"
+              ERROR_REPORT=$(echo "$ERROR_REPORT" | sed 's/"/\\"/g' | tr '\n' ' ')
+              echo "error_report=Error de compilación: $ERROR_REPORT" >> $GITHUB_OUTPUT
+            else
+              # Extraer información de tests
+              TESTS_RUN=$(grep -oP 'Tests run: \K\d+' test_output.log | head -1 || echo "0")
+              TESTS_FAILED=$(grep -oP 'Failures: \K\d+' test_output.log | head -1 || echo "0")
+              TESTS_ERRORS=$(grep -oP 'Errors: \K\d+' test_output.log | head -1 || echo "0")
+              
+              # Asegurar que sean números
+              TESTS_RUN=${TESTS_RUN:-0}
+              TESTS_FAILED=${TESTS_FAILED:-0}
+              TESTS_ERRORS=${TESTS_ERRORS:-0}
+              
+              TESTS_PASSED=$((TESTS_RUN - TESTS_FAILED - TESTS_ERRORS))
+              
+              echo "tests_run=$TESTS_RUN" >> $GITHUB_OUTPUT
+              echo "tests_passed=$TESTS_PASSED" >> $GITHUB_OUTPUT
+              echo "tests_failed=$TESTS_FAILED" >> $GITHUB_OUTPUT
+              
+              # Determinar status
+              if [ "$TESTS_FAILED" -eq "0" ] && [ "$TESTS_ERRORS" -eq "0" ] && [ "$TESTS_RUN" -gt "0" ]; then
+                echo "status=success" >> $GITHUB_OUTPUT
+                echo "error_report=" >> $GITHUB_OUTPUT
+              elif [ "$TESTS_RUN" -eq "0" ]; then
+                echo "status=error" >> $GITHUB_OUTPUT
+                echo "error_report=No se ejecutaron tests" >> $GITHUB_OUTPUT
+              else
+                echo "status=failed" >> $GITHUB_OUTPUT
+                ERROR_REPORT=$(grep -A 10 "FAILURE" test_output.log | head -n 20)
+                ERROR_REPORT="${ERROR_REPORT:0:500}"
+                ERROR_REPORT=$(echo "$ERROR_REPORT" | sed 's/"/\\"/g' | tr '\n' ' ')
+                echo "error_report=$ERROR_REPORT" >> $GITHUB_OUTPUT
+              fi
+            fi
+          else
+            echo "❌ No se encontró archivo de resultados"
+            echo "status=error" >> $GITHUB_OUTPUT
+            echo "error_report=No se encontró archivo de resultados" >> $GITHUB_OUTPUT
+            echo "tests_run=0" >> $GITHUB_OUTPUT
+            echo "tests_passed=0" >> $GITHUB_OUTPUT
+            echo "tests_failed=0" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Report results to Firestore
+        env:
+          FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+        run: |
+          JSON_PAYLOAD=$(cat <<EOF
+          {
+            "fields": {
+              "submissionId": {"stringValue": "${{ github.event.client_payload.submissionId }}"},
+              "userId": {"stringValue": "${{ github.event.client_payload.userId }}"},
+              "exerciseId": {"stringValue": "${{ github.event.client_payload.exerciseId }}"},
+              "status": {"stringValue": "${{ steps.parse_results.outputs.status }}"},
+              "testsRun": {"integerValue": "${{ steps.parse_results.outputs.tests_run }}"},
+              "testsPassed": {"integerValue": "${{ steps.parse_results.outputs.tests_passed }}"},
+              "testsFailed": {"integerValue": "${{ steps.parse_results.outputs.tests_failed }}"},
+              "errorReport": {"stringValue": "${{ steps.parse_results.outputs.error_report }}"},
+              "completedAt": {"timestampValue": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"},
+              "githubRunId": {"stringValue": "${{ github.run_id }}"}
+            }
+          }
+          EOF
+          )
+          
+          echo "Enviando resultados a Firestore..."
+          
+          curl -X POST \
+            "https://firestore.googleapis.com/v1/projects/$FIREBASE_PROJECT_ID/databases/(default)/documents/results" \
+            -H "Content-Type: application/json" \
+            -d "$JSON_PAYLOAD"
+          
+          echo "✅ Resultados enviados a Firestore"

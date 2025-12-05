@@ -1,21 +1,30 @@
 <!DOCTYPE html>
 <html lang="es">
 
+<!-- Head: Metadata and Resources -->
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Java Tutor - Dashboard</title>
-    <link rel="stylesheet" href="src/css/dashboard.css">
+    <link rel="stylesheet" href="../css/dashboard.css">
     <script src="https://unpkg.com/feather-icons"></script>
 </head>
 
+<!-- Dashboard Page Layout -->
+
 <body>
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+    
     <div class="dashboard-layout">
 
+        <!-- Sidebar Navigation -->
         <nav class="sidebar">
+            <!-- Sidebar Header: logo and toggle -->
             <div class="sidebar-header">
                 <a href="#" class="logo">
-                    <img src="src/assets/icons/main_icon.png" alt="Logo" class="logo-icon">
+                    <img src="../assets/icons/main_icon.png" alt="Logo" class="logo-icon">
                     <span class="logo-text">Java Tutor</span>
                 </a>
                 <button class="sidebar-toggle" id="sidebarToggle">
@@ -23,43 +32,39 @@
                 </button>
             </div>
 
+            <!-- Main Navigation Menu -->
             <ul class="menu-links">
                 <li class="menu-item active">
-                    <a href="#">
+                    <a href="dashboard.html">
                         <i data-feather="home"></i>
                         <span class="link-text">Reporte de Avances</span>
                     </a>
                 </li>
-                <li class="menu-item has-submenu">
-                    <a href="#">
-                        <i data-feather="check-square"></i>
-                        <span class="link-text">Tests Ejercicios</span>
-                        <i data-feather="chevron-right" class="submenu-toggle"></i>
+                <li class="menu-item">
+                    <a href="exercises.html">
+                        <i data-feather="code"></i>
+                        <span class="link-text">Ejercicios</span>
                     </a>
-                    <ul class="submenu">
-                        <li class="submenu-item"><a href="#">Pasados</a></li>
-                        <li class="submenu-item"><a href="#">Fallados</a></li>
-                        <li class="submenu-item"><a href="#">Totales</a></li>
-                    </ul>
+                </li>
+                <!-- Admin Panel Link (only for admins) -->
+                <li class="menu-item admin-only" id="adminMenuItem" style="display: none;">
+                    <a href="admin.html">
+                        <i data-feather="shield"></i>
+                        <span class="link-text">Panel de Admin</span>
+                    </a>
                 </li>
                 <li class="menu-item">
-                    <a href="#">
+                    <a href="settings.html">
                         <i data-feather="settings"></i>
                         <span class="link-text">Configuración</span>
                     </a>
                 </li>
             </ul>
 
+            <!-- Sidebar Footer: commit info and user profile -->
             <div class="sidebar-footer">
-                <div class="commit-info">
-                    <i data-feather="git-commit"></i>
-                    <div class="commit-details">
-                        <span class="commit-label">Último intento (Commit):</span>
-                        <span class="commit-date" id="lastCommitDate">Aún no hay commits</span>
-                    </div>
-                </div>
                 <div class="user-profile">
-                    <img src="https://via.placeholder.com/40" alt="Avatar" class="user-avatar" id="userAvatar">
+                    <img src="#" alt="Avatar" class="user-avatar" id="userAvatar">
                     <div class="user-details">
                         <span class="user-name" id="userName">DeepDevJose</span>
                         <a href="signin.html" class="logout-link">Cerrar sesión</a>
@@ -67,25 +72,29 @@
                 </div>
             </div>
         </nav>
+
+        <!-- Main Content -->
         <main class="main-content">
+            <!-- Mobile sidebar toggle button -->
             <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
                 <i data-feather="menu"></i>
             </button>
 
+            <!-- Main header: title and actions -->
             <header class="main-header">
                 <h1 id="pageTitle">Reporte de Avances</h1>
                 <div class="header-actions">
-                    <button class="action-btn">
-                        <i data-feather="bell"></i>
-                    </button>
-                    <button class="action-btn">
+                    <button class="action-btn" id="helpBtn">
                         <i data-feather="help-circle"></i>
                     </button>
                 </div>
             </header>
 
+            <!-- Main widget container -->
             <div class="content-wrapper">
+                <!-- Widget grid -->
                 <div class="widget-grid">
+                    <!-- Widget: tests passed -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Tests Pasados</h3>
@@ -103,6 +112,7 @@
                         </div>
                     </div>
 
+                    <!-- Widget: tests failed -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Tests Fallados</h3>
@@ -120,6 +130,7 @@
                         </div>
                     </div>
 
+                    <!-- Widget: total tests -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Tests Totales</h3>
@@ -129,10 +140,11 @@
                         </div>
                         <div class="stat" id="testsTotal">0</div>
                         <div class="stat-label">
-                            Ejercicios completados
+                            Tests completados
                         </div>
                     </div>
 
+                    <!-- Widget: success rate -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Tasa de Éxito</h3>
@@ -146,6 +158,21 @@
                         </div>
                     </div>
 
+                    <!-- Widget: total points -->
+                    <div class="widget">
+                        <div class="widget-header">
+                            <h3>Puntos Totales</h3>
+                            <div class="widget-icon">
+                                <i data-feather="award"></i>
+                            </div>
+                        </div>
+                        <div class="stat" id="totalPoints">0</div>
+                        <div class="stat-label">
+                            Puntos ganados
+                        </div>
+                    </div>
+
+                    <!-- Widget: course progress -->
                     <div class="widget progress-widget">
                         <div class="widget-header">
                             <h3>Progreso Total del Curso</h3>
@@ -163,6 +190,7 @@
                         </div>
                     </div>
 
+                    <!-- Widget: last activity -->
                     <div class="widget">
                         <div class="widget-header">
                             <h3>Última Actividad</h3>
@@ -191,14 +219,92 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Widget: recent submissions -->
+                    <div class="widget" style="grid-column: span 2;">
+                        <div class="widget-header">
+                            <h3>Envíos Recientes</h3>
+                            <div class="widget-icon">
+                                <i data-feather="clock"></i>
+                            </div>
+                        </div>
+                        <div id="recentSubmissions" class="recent-submissions-list">
+                            <div class="empty-state">
+                                <i data-feather="inbox"></i>
+                                <p>No hay envíos recientes</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </main>
     </div>
-    <script type="module" src="src/js/firebase-init.js"></script>
-    <script type="module" src="src/js/dashboard.js"></script>
+
+    <!-- Help Modal -->
+    <div class="help-modal" id="helpModal">
+        <div class="help-modal-content">
+            <button class="help-modal-close" id="helpModalClose">
+                <i data-feather="x"></i>
+            </button>
+            
+            <div class="help-modal-header">
+                <img src="https://github.com/deepdevjose.png" alt="Jose Manuel Cortes Ceron" class="help-profile-img">
+                <h2>Jose Manuel Cortes Ceron</h2>
+                <p class="help-subtitle">Desarrollador de Java Tutor</p>
+                <p class="help-subtitle" style="font-weight: bold;">Datos de contacto para soporte</p>
+            </div>
+
+            <div class="help-modal-body">
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="mail"></i>
+                        Correo Electrónico
+                    </h3>
+                    <div class="help-info-item">
+                        <span class="help-email">deepdevjose@itsoeh.edu.mx</span>
+                        <button class="copy-email-btn" id="copyEmailBtn" title="Copiar correo">
+                            <i data-feather="copy"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="message-circle"></i>
+                        WhatsApp
+                    </h3>
+                    <a href="https://wa.me/525560115704" target="_blank" class="help-whatsapp-btn">
+                        <i data-feather="send"></i>
+                        Enviar mensaje
+                    </a>
+                </div>
+
+                <div class="help-section">
+                    <h3>
+                        <i data-feather="github"></i>
+                        GitHub
+                    </h3>
+                    <a href="https://github.com/deepdevjose" target="_blank" class="help-github-link">
+                        @deepdevjose
+                        <i data-feather="external-link"></i>
+                    </a>
+                </div>
+            </div>
+
+            <div class="help-modal-footer">
+                <p>
+                    <i data-feather="heart"></i>
+                    Made with ❤️ by DeepDevJose to ITICs - ITSOEH
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS dependencies -->
+    <script type="module" src="../js/firebase-init.js"></script>
+    <script type="module" src="../js/dashboard.js"></script>
     <script>
-        feather.replace(); // Asegúrate que esto se llame después de cargar el contenido
+        feather.replace();
     </script>
 </body>
 

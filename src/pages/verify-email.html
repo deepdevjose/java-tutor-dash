@@ -2,15 +2,18 @@
 <html lang="es">
 
 <head>
+    <!-- Head: Metadata and Resources -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verifica tu Correo - Java Tutor</title>
-    <link rel="stylesheet" href="src/css/signin.css">
-    <link rel="stylesheet" href="src/css/verify-email.css">
+    <link rel="stylesheet" href="../css/signin.css">
+    <link rel="stylesheet" href="../css/verify-email.css">
 </head>
 
 <body>
+    <!-- Verify Email Page Layout -->
     <div class="container">
+        <!-- Welcome Section: branding and intro -->
         <div class="left-side">
             <div class="welcome-content">
                 <div class="logo">
@@ -21,9 +24,11 @@
             </div>
         </div>
 
+        <!-- Verification Section -->
         <div class="right-side">
             <div class="form-container verification-box">
                 <div class="icon-container">
+                    <!-- Email verification icon -->
                     <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="1.5">
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
@@ -36,6 +41,7 @@
                     revisa tu bandeja de entrada (y la carpeta de spam) y haz clic en el enlace para activar tu cuenta.
                 </p>
 
+                <!-- Actions: resend and logout -->
                 <div class="actions">
                     <button id="resendEmailBtn" class="submit-btn btn-secondary">Reenviar Correo</button>
                     <a href="signin.html" class="logout-link" id="logoutBtn">Cerrar sesión e ir a Login</a>
@@ -44,13 +50,15 @@
                 <p class="info-text">
                     Una vez verificado, serás redirigido automáticamente al dashboard.
                 </p>
+                <!-- Loading spinner -->
                 <div id="loadingSpinner" class="spinner" style="display: none;"></div>
             </div>
         </div>
     </div>
 
-    <script type="module" src="src/js/firebase-init.js"></script>
-    <script type="module" src="src/js/verify-email.js"></script>
+    <!-- Firebase and Verify Email JS Modules -->
+    <script type="module" src="../js/firebase-init.js"></script>
+    <script type="module" src="../js/verify-email.js"></script>
 </body>
 
 </html>

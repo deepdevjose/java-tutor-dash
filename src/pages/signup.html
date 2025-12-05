@@ -2,15 +2,17 @@
 <html lang="es">
 
 <head>
+    <!-- Head: Metadata and Resources -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Java Tutor - Registrarse</title>
-    <link rel="stylesheet" href="src/css/signup.css">
+    <link rel="stylesheet" href="../css/signup.css">
 </head>
 
 <body>
+    <!-- Signup Page Layout -->
     <div class="container">
-        <!-- Welcome Section - Left Side -->
+        <!-- Welcome Section: branding and intro -->
         <div class="left-side">
             <div class="welcome-content">
                 <div class="logo">
@@ -21,37 +23,39 @@
             </div>
         </div>
 
-        <!-- Form Section - Right Side -->
+        <!-- Form Section: registration form -->
         <div class="right-side">
-            <!-- Sign Up Form -->
             <div class="form-container" id="signupForm">
                 <h2>Crear cuenta</h2>
                 <p class="subtitle">Ingresa tus datos personales para crear tu cuenta.</p>
 
+                <!-- Registration Form -->
                 <form id="registerForm">
+                    <!-- Personal Information Row -->
                     <div class="form-row">
                         <div class="form-group">
                             <label for="firstName">Nombre</label>
-                            <input type="text" id="firstName" placeholder="ej. Jose" required>
+                            <input type="text" id="firstName" placeholder="ej. Juan" required>
                         </div>
                         <div class="form-group">
                             <label for="middleName">Segundo nombre</label>
-                            <input type="text" id="middleName" placeholder="ej. Manuel">
+                            <input type="text" id="middleName" placeholder="ej. Miguel">
                         </div>
                         <div class="form-group">
                             <label for="apellidoPaterno">Apellido Paterno</label>
-                            <input type="text" id="apellidoPaterno" placeholder="ej. Cortes" required>
+                            <input type="text" id="apellidoPaterno" placeholder="ej. Hernandez" required>
                         </div>
                         <div class="form-group">
                             <label for="apellidoMaterno">Apellido Materno</label>
-                            <input type="text" id="apellidoMaterno" placeholder="ej. Ceron" required>
+                            <input type="text" id="apellidoMaterno" placeholder="ej. Torres" required>
                         </div>
                     </div>
 
+                    <!-- Academic Information Row -->
                     <div class="form-row">
                         <div class="form-group">
                             <label for="matricula">Matrícula</label>
-                            <input type="text" id="matricula" placeholder="ej. 230110688" required>
+                            <input type="text" id="matricula" placeholder="ej. 230000001" required>
                         </div>
                         <div class="form-group">
                             <label for="grupo">Grupo</label>
@@ -59,6 +63,7 @@
                         </div>
                     </div>
 
+                    <!-- Semester Selection -->
                     <div class="form-group">
                         <label for="semestre">Semestre</label>
                         <select id="semestre" required>
@@ -75,24 +80,29 @@
                         </select>
                     </div>
 
+                    <!-- Email Input -->
                     <div class="form-group">
                         <label for="email">Correo electrónico</label>
-                        <input type="email" id="email" placeholder="ej. deepdevjose@gmail.com" required>
+                        <input type="email" id="email" placeholder="ej. juantorres@gmail.com" required>
                         <span class="error-message" id="emailError"></span>
                     </div>
 
+                    <!-- GitHub Username Input -->
                     <div class="form-group">
                         <label for="githubUsername">Usuario de GitHub</label>
-                        <input type="text" id="githubUsername" placeholder="ej. deepdevjose" required>
+                        <input type="text" id="githubUsername" placeholder="ej. juanitodev" required>
                         <span class="error-message" id="githubError"></span>
                     </div>
 
+                    <!-- Password Input -->
                     <div class="form-group">
                         <label for="password">Contraseña</label>
                         <div class="password-input">
                             <input type="password" id="password" placeholder="Ingresa tu contraseña" required>
                             <button type="button" class="toggle-password">
-                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                                <!-- Password visibility toggle icon -->
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="2">
                                     <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
                                     <circle cx="12" cy="12" r="3"></circle>
                                 </svg>
@@ -101,8 +111,10 @@
                         <small>Debe tener al menos 6 caracteres.</small>
                     </div>
 
+                    <!-- Submit Button -->
                     <button type="submit" class="submit-btn">Registrarse</button>
 
+                    <!-- Switch to login link -->
                     <p class="switch-form">
                         ¿Ya tienes una cuenta? <a href="signin.html" id="showLogin">Inicia sesión</a>
                     </p>
@@ -110,8 +122,9 @@
             </div>
         </div>
     </div>
-    <script type="module" src="src/js/firebase-init.js"></script>
-    <script type="module" src="src/js/signup.js"></script>
+    <!-- Firebase and Signup JS Modules -->
+    <script type="module" src="../js/firebase-init.js"></script>
+    <script type="module" src="../js/signup.js"></script>
 </body>
 
 </html>

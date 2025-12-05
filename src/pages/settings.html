@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<!-- Head: Metadata and Resources -->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Java Tutor - Configuración</title>
+    <link rel="stylesheet" href="../css/dashboard.css">
+    <link rel="stylesheet" href="../css/settings.css">
+    <script src="https://unpkg.com/feather-icons"></script>
+</head>
+
+<!-- Settings Page Layout -->
+
+<body>
+    <!-- Overlay para cerrar sidebar en móvil -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <div class="dashboard-layout">
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar">
+            <!-- Sidebar Header: logo and toggle -->
+            <div class="sidebar-header">
+                <a href="dashboard.html" class="logo">
+                    <img src="../assets/icons/main_icon.png" alt="Logo" class="logo-icon">
+                    <span class="logo-text">Java Tutor</span>
+                </a>
+                <button class="sidebar-toggle" id="sidebarToggle">
+                    <i data-feather="chevrons-left"></i>
+                </button>
+            </div>
+
+            <!-- Main Navigation Menu -->
+            <ul class="menu-links">
+                <li class="menu-item">
+                    <a href="dashboard.html">
+                        <i data-feather="home"></i>
+                        <span class="link-text">Reporte de Avances</span>
+                    </a>
+                </li>
+                <li class="menu-item">
+                    <a href="exercises.html">
+                        <i data-feather="code"></i>
+                        <span class="link-text">Ejercicios</span>
+                    </a>
+                </li>
+                <li class="menu-item active">
+                    <a href="settings.html">
+                        <i data-feather="settings"></i>
+                        <span class="link-text">Configuración</span>
+                    </a>
+                </li>
+            </ul>
+
+            <!-- Sidebar Footer: commit info and user profile -->
+            <div class="sidebar-footer">
+
+                <div class="user-profile">
+                    <img src="#" alt="Avatar" class="user-avatar" id="userAvatar">
+                    <div class="user-details">
+                        <span class="user-name" id="userName">DeepDevJose</span>
+                        <a href="signin.html" class="logout-link">Cerrar sesión</a>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Mobile sidebar toggle button -->
+            <button class="mobile-sidebar-toggle" id="mobileSidebarToggle">
+                <i data-feather="menu"></i>
+            </button>
+
+            <!-- Main header: title and actions -->
+            <header class="main-header">
+                <h1 id="pageTitle">Configuración</h1>
+            </header>
+
+            <!-- Settings Content -->
+            <div class="content-wrapper">
+                <div class="settings-container">
+
+                    <!-- Información Personal -->
+                    <section class="settings-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i data-feather="user"></i>
+                            </div>
+                            <div class="section-info">
+                                <h2>Información Personal</h2>
+                                <p>Actualiza tus datos personales y académicos</p>
+                            </div>
+                        </div>
+
+                        <form class="settings-form" id="personalInfoForm">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="firstName">Primer Nombre</label>
+                                    <input type="text" id="firstName" name="firstName" placeholder="Ej: José" required
+                                        autocomplete="given-name">
+                                    <span class="error-message" id="firstNameError"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="middleName">Segundo Nombre (Opcional)</label>
+                                    <input type="text" id="middleName" name="middleName" placeholder="Ej: Luis"
+                                        autocomplete="additional-name">
+                                    <span class="error-message" id="middleNameError"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="apellidoPaterno">Apellido Paterno</label>
+                                    <input type="text" id="apellidoPaterno" name="apellidoPaterno"
+                                        placeholder="Ej: García" required autocomplete="family-name">
+                                    <span class="error-message" id="apellidoPaternoError"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="apellidoMaterno">Apellido Materno</label>
+                                    <input type="text" id="apellidoMaterno" name="apellidoMaterno"
+                                        placeholder="Ej: Pérez" required autocomplete="family-name">
+                                    <span class="error-message" id="apellidoMaternoError"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="semester">Semestre</label>
+                                    <select id="semester" name="semester" required>
+                                        <option value="">Selecciona tu semestre</option>
+                                        <option value="1">1° Semestre</option>
+                                        <option value="2">2° Semestre</option>
+                                        <option value="3">3° Semestre</option>
+                                        <option value="4">4° Semestre</option>
+                                        <option value="5">5° Semestre</option>
+                                        <option value="6">6° Semestre</option>
+                                        <option value="7">7° Semestre</option>
+                                        <option value="8">8° Semestre</option>
+                                        <option value="9">9° Semestre</option>
+                                    </select>
+                                    <span class="error-message" id="semesterError"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="group">Grupo</label>
+                                    <input type="text" id="group" name="group" placeholder="Ej: A, B, C" required
+                                        maxlength="2">
+                                    <span class="error-message" id="groupError"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="save"></i>
+                                    Guardar Cambios
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- Cuenta y Seguridad -->
+                    <section class="settings-section">
+                        <div class="section-header">
+                            <div class="section-icon">
+                                <i data-feather="lock"></i>
+                            </div>
+                            <div class="section-info">
+                                <h2>Cuenta y Seguridad</h2>
+                                <p>Gestiona la seguridad de tu cuenta</p>
+                            </div>
+                        </div>
+
+                        <form class="settings-form" id="securityForm">
+                            <div class="form-group">
+                                <label for="currentPassword">Contraseña Actual</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="currentPassword" name="currentPassword"
+                                        placeholder="Ingresa tu contraseña actual" autocomplete="current-password">
+                                    <button type="button" class="toggle-password" data-target="currentPassword">
+                                        <i data-feather="eye"></i>
+                                    </button>
+                                </div>
+                                <span class="error-message" id="currentPasswordError"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="newPassword">Nueva Contraseña</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="newPassword" name="newPassword"
+                                        placeholder="Mínimo 8 caracteres" autocomplete="new-password">
+                                    <button type="button" class="toggle-password" data-target="newPassword">
+                                        <i data-feather="eye"></i>
+                                    </button>
+                                </div>
+                                <span class="error-message" id="newPasswordError"></span>
+                                <div class="password-strength" id="passwordStrength">
+                                    <div class="strength-bar">
+                                        <div class="strength-fill" id="strengthFill"></div>
+                                    </div>
+                                    <span class="strength-text" id="strengthText"></span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="confirmPassword">Confirmar Nueva Contraseña</label>
+                                <div class="password-input-wrapper">
+                                    <input type="password" id="confirmPassword" name="confirmPassword"
+                                        placeholder="Confirma tu nueva contraseña" autocomplete="new-password">
+                                    <button type="button" class="toggle-password" data-target="confirmPassword">
+                                        <i data-feather="eye"></i>
+                                    </button>
+                                </div>
+                                <span class="error-message" id="confirmPasswordError"></span>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">
+                                    <i data-feather="shield"></i>
+                                    Cambiar Contraseña
+                                </button>
+                            </div>
+                        </form>
+                    </section>
+
+                    <!-- Zona de Peligro -->
+                    <section class="settings-section danger-zone">
+                        <div class="section-header">
+                            <div class="section-icon danger">
+                                <i data-feather="alert-triangle"></i>
+                            </div>
+                            <div class="section-info">
+                                <h2>Zona de Peligro</h2>
+                                <p>Acciones irreversibles con tu cuenta</p>
+                            </div>
+                        </div>
+
+                        <div class="danger-actions">
+                            <div class="danger-item">
+                                <div class="danger-item-info">
+                                    <h3>Eliminar Cuenta</h3>
+                                    <p>Una vez eliminada, no podrás recuperar tu cuenta ni tus datos. Esta acción es
+                                        permanente.</p>
+                                </div>
+                                <button type="button" class="btn btn-danger" id="deleteAccountBtn">
+                                    <i data-feather="trash-2"></i>
+                                    Eliminar Cuenta
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal de Confirmación para Eliminar Cuenta -->
+    <div class="modal" id="deleteAccountModal" role="dialog" aria-labelledby="deleteModalTitle" aria-hidden="true">
+        <div class="modal-overlay"></div>
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="deleteModalTitle">⚠️ ¿Estás seguro?</h3>
+                <button class="modal-close" id="closeDeleteModal" aria-label="Cerrar">
+                    <i data-feather="x"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Esta acción eliminará permanentemente tu cuenta y todos tus datos asociados:</p>
+                <ul class="warning-list">
+                    <li>Información personal</li>
+                    <li>Historial de tests y ejercicios</li>
+                    <li>Progreso del curso</li>
+                    <li>Configuraciones</li>
+                </ul>
+                <p class="warning-text">Esta acción <strong>NO SE PUEDE DESHACER</strong>.</p>
+
+                <div class="form-group">
+                    <label for="confirmDeleteInput">Para confirmar, escribe: <strong>Adios vaquero!</strong></label>
+                    <input type="text" id="confirmDeleteInput" placeholder="Escribe 'Adios vaquero!' tal como aquí, pero sin las comillas"
+                        autocomplete="off">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" id="cancelDeleteBtn">Cancelar</button>
+                <button class="btn btn-danger" id="confirmDeleteBtn" disabled>
+                    <i data-feather="trash-2"></i>
+                    Eliminar Permanentemente
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- JS dependencies -->
+    <script type="module" src="../js/firebase-init.js"></script>
+    <script type="module" src="../js/settings.js"></script>
+    <script>
+        feather.replace();
+    </script>
+</body>
+
+</html>

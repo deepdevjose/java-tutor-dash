@@ -1,10 +1,15 @@
 /**
+ * Inicializa la animación secuencial de los elementos de la Hero Page.
+ * Añade la clase 'visible' a cada elemento con un retraso progresivo para crear efecto de entrada.
+ *
  * @file index.js
- * Lógica para la animación de entrada de la Hero Page.
  */
 document.addEventListener('DOMContentLoaded', () => {
 
-    // Seleccionar todos los elementos que animaremos
+    /**
+     * Elementos que serán animados en la Hero Page.
+     * @type {Array<HTMLElement|null>}
+     */
     const elementsToAnimate = [
         document.querySelector('.logo'),
         document.querySelector('.hero-nav .btn-secondary'),
@@ -14,19 +19,21 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('hero-button')
     ];
 
-    // Tiempo de espera base
-    let delay = 300; // ms
+    /**
+     * Tiempo inicial de retraso para la animación (en milisegundos).
+     * @type {number}
+     */
+    let delay = 300;
 
-    // Recorrer cada elemento y añadirle la clase 'visible'
-    // con un pequeño retraso (delay) entre cada uno
+    // Animamos cada elemento con un retraso incremental para lograr el efecto "staggered".
     elementsToAnimate.forEach((element) => {
         if (element) {
             setTimeout(() => {
                 element.classList.add('visible');
             }, delay);
 
-            // Incrementar el retraso para el siguiente elemento
-            delay += 200; // 200ms entre cada animación
+            // Incrementamos el retraso para el siguiente elemento (efecto cascada)
+            delay += 200;
         }
     });
 

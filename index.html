@@ -2,26 +2,40 @@
 <html lang="es">
 
 <head>
+    <!-- Head: Metadata and Resources -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Java Tutor - Bienvenido</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
+    <!-- Main CSS -->
     <link rel="stylesheet" href="src/css/index.css">
 </head>
 
 <body>
 
+    <!-- Hero Section -->
     <main class="hero-container">
 
+        <!-- Overlay for background effect -->
         <div class="hero-overlay"></div>
 
+        <!-- Navigation Bar -->
         <nav class="hero-nav">
             <a href="index.html" class="logo">
                 <img src="src/assets/icons/main_icon.png" alt="Logo" class="logo-icon">
                 <span>Java Tutor</span>
             </a>
-            <a href="signin.html" class="btn btn-secondary">Iniciar Sesión</a>
+            <div class="nav-buttons">
+                <a href="src/pages/signin.html" class="btn btn-nav-secondary">Iniciar Sesión</a>
+                <a href="src/pages/signup.html" class="btn btn-nav-primary">Registrarse</a>
+            </div>
         </nav>
 
+        <!-- Hero Content -->
         <div class="hero-content">
             <h1 id="hero-title">
                 <span>Bienvenido</span>
@@ -31,9 +45,6 @@
             <p id="hero-subtitle">
                 Tu dashboard personal para seguir tu progreso en el curso de Java.
             </p>
-            <div id="hero-button">
-                <a href="signup.html" class="btn btn-primary">Crear una cuenta</a>
-            </div>
         </div>
 
     </main>
