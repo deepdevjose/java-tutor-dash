@@ -20,7 +20,7 @@ import {
     limit,
     serverTimestamp
 } from "https://www.gstatic.com/firebasejs/12.4.0/firebase-firestore.js";
-import { tryUpdateStats, incrementStat } from './stats-updater.js';
+import { tryUpdateStats, incrementStat, initializeStats } from './stats-updater.js';
 
 // ==========================================
 // GLOBAL STATE
@@ -175,6 +175,9 @@ async function checkAdminAccess(user) {
 function initializeAdminPanel() {
     console.log('✅ Inicializando panel de administración');
     loadExercises();
+    
+    // Inicializar stats si no existe (solo admins pueden)
+    initializeStats().catch(err => console.warn('⚠️ Stats init:', err));
     
     // Intentar actualizar stats agregados en segundo plano
     tryUpdateStats().catch(err => console.warn('⚠️ Stats update:', err));
