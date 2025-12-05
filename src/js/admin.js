@@ -504,6 +504,13 @@ function closeExerciseModal() {
 function resetForm() {
     elements.exerciseForm.reset();
     currentExerciseId = null;
+    
+    // Restaurar botón de guardar al estado original
+    if (elements.saveExerciseBtn) {
+        elements.saveExerciseBtn.disabled = false;
+        elements.saveExerciseBtn.innerHTML = '<i data-feather="save"></i> Guardar Ejercicio';
+        feather.replace();
+    }
 }
 
 async function loadExerciseData(exerciseId) {
@@ -602,7 +609,7 @@ async function handleExerciseSubmit(e) {
         }
         
         // Reload exercises and close modal
-        loadExercises();
+        await loadExercises();
         closeExerciseModal();
         
     } catch (error) {
