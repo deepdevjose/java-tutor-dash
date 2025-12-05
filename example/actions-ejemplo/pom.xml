@@ -18,6 +18,12 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
         <junit.version>5.9.3</junit.version>
+        
+        <!-- Optimizaciones para CI/CD -->
+        <maven.test.failure.ignore>false</maven.test.failure.ignore>
+        <skipITs>true</skipITs>
+        <maven.javadoc.skip>true</maven.javadoc.skip>
+        <maven.source.skip>true</maven.source.skip>
     </properties>
 
     <dependencies>
@@ -46,6 +52,10 @@
                 <configuration>
                     <source>11</source>
                     <target>11</target>
+                    <showWarnings>false</showWarnings>
+                    <showDeprecation>false</showDeprecation>
+                    <optimize>false</optimize>
+                    <debug>false</debug>
                 </configuration>
             </plugin>
 
@@ -58,6 +68,33 @@
                     <includes>
                         <include>**/*Test.java</include>
                     </includes>
+                    <parallel>methods</parallel>
+                    <threadCount>2</threadCount>
+                    <forkCount>1</forkCount>
+                    <reuseForks>true</reuseForks>
+                    <trimStackTrace>true</trimStackTrace>
+                    <printSummary>true</printSummary>
+                    <useFile>false</useFile>
+                    <reportFormat>plain</reportFormat>
+                </configuration>
+            </plugin>
+            
+            <!-- Desactivar plugins innecesarios -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-deploy-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <skip>true</skip>
+                </configuration>
+            </plugin>
+            
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-install-plugin</artifactId>
+                <version>3.1.1</version>
+                <configuration>
+                    <skip>true</skip>
                 </configuration>
             </plugin>
         </plugins>
