@@ -17,7 +17,7 @@ jobs:
         with:
           java-version: '11'
           distribution: 'temurin'
-          cache: 'gradle'
+          cache: 'maven'
       
       - name: Display received payload
         run: |
@@ -118,30 +118,27 @@ jobs:
           echo "📄 Contenido de App.java:"
           cat example/actions-ejemplo/src/main/java/com/javatutor/App.java
       
-      - name: Run Gradle tests
-        id: gradle_test
+      - name: Run Maven tests
+        id: maven_test
         continue-on-error: true
         working-directory: example/actions-ejemplo
         run: |
-          echo "🧪 Ejecutando tests con Gradle..."
+          echo "🧪 Ejecutando tests con Maven..."
           
-          # Hacer ejecutable el gradlew (por si acaso)
-          chmod +x gradlew
-          
-          # Ejecutar tests (sin stacktrace ni logs verbosos para acelerar)
-          ./gradlew test --no-daemon --console=plain --quiet || true
+          # Ejecutar tests con Maven
+          mvn test -B -q
           echo "exit_code=$?" >> $GITHUB_OUTPUT
           
-          echo "📁 Archivos generados por Gradle:"
-          ls -la build/test-results/test/ 2>/dev/null || echo "⚠️ No se generaron resultados de tests"
+          echo "📁 Archivos generados por Maven:"
+          ls -la target/surefire-reports/ 2>/dev/null || echo "⚠️ No se generaron resultados de tests"
       
       - name: Parse test results
         id: parse_results
         run: |
           echo "🔍 Parseando resultados de tests..."
           
-          # Encontrar el archivo XML (solo buscar el primero para acelerar)
-          XML_FILE=$(find example/actions-ejemplo/build/test-results/test -name "*.xml" -type f 2>/dev/null | head -n 1)
+          # Buscar archivo XML de Maven
+          XML_FILE=$(find example/actions-ejemplo/target/surefire-reports -name "*.xml" -type f 2>/dev/null | head -n 1)
           
           if [ -f "$XML_FILE" ]; then
             echo "✅ Archivo XML encontrado: $XML_FILE"
@@ -202,9 +199,9 @@ jobs:
             
           else
             # Si no hay XML, asumir que el exit code indica el resultado
-            echo "⚠️ XML no encontrado, usando exit code de Gradle"
+            echo "⚠️ XML no encontrado, usando exit code de Maven"
             
-            EXIT_CODE="${{ steps.gradle_test.outputs.exit_code }}"
+            EXIT_CODE="${{ steps.maven_test.outputs.exit_code }}"
             if [ "$EXIT_CODE" = "0" ]; then
               echo "status=success" >> $GITHUB_OUTPUT
               echo "tests_run=1" >> $GITHUB_OUTPUT
