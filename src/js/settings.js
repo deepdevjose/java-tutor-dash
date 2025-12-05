@@ -28,13 +28,17 @@ import {
 
 const isDevelopment = () => window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-function logDebug(...args) {
-    if (isDevelopment()) console.log('[Settings Debug]', ...args);
-}
+const logDebug = (...args) => {
+    if (isDevelopment()) console.log(...args);
+};
 
-function logError(...args) {
-    console.error('[Settings Error]', ...args);
-}
+const logWarn = (...args) => {
+    if (isDevelopment()) console.warn(...args);
+};
+
+const logError = (...args) => {
+    if (isDevelopment()) console.error(...args);
+};
 
 // ==========================================
 // DOM ELEMENTS

@@ -267,6 +267,23 @@
                         </div>
                     </div>
 
+                    <!-- Solution Code (Admin Only) -->
+                    <div class="form-section solution-section">
+                        <h3>
+                            <i data-feather="lock"></i>
+                            Código de Solución (Solo Admins)
+                        </h3>
+                        <div class="form-group">
+                            <label for="exerciseSolutionCode">Código Completo de Solución (App.java) *</label>
+                            <p class="help-text">
+                                <i data-feather="info"></i>
+                                Este es el código que pasa todos los tests. Solo visible para administradores.
+                            </p>
+                            <textarea id="exerciseSolutionCode" required rows="20" 
+                                placeholder="package com.javatutor;&#10;&#10;public class App {&#10;    public static void main(String[] args) {&#10;        // Solución completa aquí&#10;    }&#10;}"></textarea>
+                        </div>
+                    </div>
+
                     <!-- Form Actions -->
                     <div class="form-actions">
                         <button type="button" class="btn btn-secondary" id="cancelExerciseBtn">Cancelar</button>

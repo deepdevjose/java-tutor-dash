@@ -72,6 +72,7 @@ const elements = {
     exerciseTheoryLink: document.getElementById('exerciseTheoryLink'),
     exerciseTemplate: document.getElementById('exerciseTemplate'),
     exerciseTestCode: document.getElementById('exerciseTestCode'),
+    exerciseSolutionCode: document.getElementById('exerciseSolutionCode'),
     cancelExerciseBtn: document.getElementById('cancelExerciseBtn'),
     saveExerciseBtn: document.getElementById('saveExerciseBtn'),
     
@@ -489,6 +490,9 @@ function openExerciseModal(exerciseId = null) {
     
     elements.exerciseModal.classList.add('active');
     document.body.style.overflow = 'hidden';
+    
+    // Replace feather icons in modal
+    setTimeout(() => feather.replace(), 100);
 }
 
 function closeExerciseModal() {
@@ -524,6 +528,7 @@ async function loadExerciseData(exerciseId) {
         elements.exerciseTheoryLink.value = exercise.theoryLink || '';
         elements.exerciseTemplate.value = exercise.templateCode || '';
         elements.exerciseTestCode.value = exercise.testCode || '';
+        elements.exerciseSolutionCode.value = exercise.solutionCode || '';
         
     } catch (error) {
         console.error('❌ Error al cargar ejercicio:', error);
@@ -559,6 +564,7 @@ async function handleExerciseSubmit(e) {
             theoryLink: elements.exerciseTheoryLink.value.trim() || null,
             templateCode: elements.exerciseTemplate.value.trim(),
             testCode: elements.exerciseTestCode.value.trim(),
+            solutionCode: elements.exerciseSolutionCode.value.trim(),
             updatedAt: serverTimestamp(),
             updatedBy: currentUser.email
         };
@@ -566,6 +572,14 @@ async function handleExerciseSubmit(e) {
         // Validation
         if (!exerciseData.testCode || exerciseData.testCode.length === 0) {
             showToast('error', 'Validación', 'Debes agregar el código del test');
+            elements.saveExerciseBtn.disabled = false;
+            elements.saveExerciseBtn.innerHTML = '<i data-feather="save"></i> Guardar Ejercicio';
+            feather.replace();
+            return;
+        }
+        
+        if (!exerciseData.solutionCode || exerciseData.solutionCode.length === 0) {
+            showToast('error', 'Validación', 'Debes agregar el código de solución');
             elements.saveExerciseBtn.disabled = false;
             elements.saveExerciseBtn.innerHTML = '<i data-feather="save"></i> Guardar Ejercicio';
             feather.replace();

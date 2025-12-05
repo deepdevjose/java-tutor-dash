@@ -43,6 +43,7 @@ const elements = {
     // Filters
     difficultyToggle: document.getElementById('difficultyToggle'),
     categoryFilter: document.getElementById('categoryFilter'),
+    authorFilter: document.getElementById('authorFilter'),
     statusToggle: document.getElementById('statusToggle'),
     
     // View Toggle
@@ -132,6 +133,7 @@ async function initializePage() {
         
         // Inicializar filtros
         populateCategoryFilter();
+        populateAuthorFilter();
         
         // Renderizar ejercicios
         renderExercises();
@@ -358,10 +360,12 @@ function filterExercisesBySearch(searchTerm) {
         const title = card.querySelector('h3')?.textContent.toLowerCase() || '';
         const description = card.querySelector('p')?.textContent.toLowerCase() || '';
         const category = card.querySelector('.category-badge')?.textContent.toLowerCase() || '';
+        const author = card.dataset.author?.toLowerCase() || '';
         
         const matches = title.includes(searchTerm) || 
                        description.includes(searchTerm) || 
-                       category.includes(searchTerm);
+                       category.includes(searchTerm) ||
+                       author.includes(searchTerm);
         
         if (matches || searchTerm === '') {
             card.style.display = '';
@@ -379,24 +383,24 @@ function renderExercises() {
     console.log('📦 Total ejercicios en allExercises:', allExercises.length);
     
     // Actualizar barra de estadísticas
-    updateStatsBar();
-    
     // Obtener valores de los filtros toggle
     const difficultyFilter = elements.difficultyToggle?.querySelector('.toggle-btn.active')?.dataset.value || 'all';
     const categoryFilter = elements.categoryFilter?.value || 'all';
+    const authorFilter = elements.authorFilter?.value || 'all';
     const statusFilter = elements.statusToggle?.querySelector('.toggle-btn.active')?.dataset.value || 'all';
     
-    console.log('🔍 Filtros aplicados:', { difficultyFilter, categoryFilter, statusFilter });
+    console.log('🔍 Filtros aplicados:', { difficultyFilter, categoryFilter, authorFilter, statusFilter });
     
     // Filtrar ejercicios
     let filteredExercises = allExercises.filter(exercise => {
         const matchesDifficulty = difficultyFilter === 'all' || exercise.difficulty === difficultyFilter;
         const matchesCategory = categoryFilter === 'all' || exercise.category === categoryFilter;
+        const matchesAuthor = authorFilter === 'all' || exercise.author === authorFilter;
         const matchesStatus = statusFilter === 'all' || 
             (statusFilter === 'completed' && exercise.completed) ||
             (statusFilter === 'pending' && !exercise.completed);
         
-        return matchesDifficulty && matchesCategory && matchesStatus;
+        return matchesDifficulty && matchesCategory && matchesAuthor && matchesStatus;
     });
     
     console.log('✨ Ejercicios después del filtrado:', filteredExercises.length);
@@ -438,6 +442,11 @@ function createExerciseCard(exercise) {
     const card = document.createElement('div');
     card.className = `exercise-card ${exercise.completed ? 'completed' : ''}`;
     card.onclick = () => openExercise(exercise);
+    
+    // Agregar data-author para búsqueda
+    if (exercise.author) {
+        card.dataset.author = exercise.author;
+    }
     
     // Valores por defecto para campos undefined
     const title = exercise.title || 'Sin título';
@@ -814,8 +823,6 @@ function displayResults(result) {
 }
 
 // ==========================================
-// POPULATE CATEGORY FILTER
-// ==========================================
 function populateCategoryFilter() {
     const categories = new Set();
     allExercises.forEach(ex => categories.add(ex.category));
@@ -827,6 +834,27 @@ function populateCategoryFilter() {
         elements.categoryFilter.appendChild(option);
     });
 }
+
+function populateAuthorFilter() {
+    if (!elements.authorFilter) return;
+    
+    // Obtener autores únicos
+    const authors = [...new Set(allExercises
+        .map(ex => ex.author)
+        .filter(author => author)
+    )].sort();
+    
+    // Limpiar y poblar filtro
+    elements.authorFilter.innerHTML = '<option value="all">Todos los autores</option>';
+    authors.forEach(author => {
+        const option = document.createElement('option');
+        option.value = author;
+        option.textContent = author;
+        elements.authorFilter.appendChild(option);
+    });
+}
+
+// ==========================================
 
 // ==========================================
 // UTILITY FUNCTIONS
@@ -931,6 +959,9 @@ function initializeEventListeners() {
     // Category Filter (dropdown)
     elements.categoryFilter?.addEventListener('change', renderExercises);
     
+    // Author Filter (dropdown)
+    elements.authorFilter?.addEventListener('change', renderExercises);
+    
     // Clear Filters Button
     const clearFiltersBtn = document.getElementById('clearFilters');
     if (clearFiltersBtn) {
@@ -945,6 +976,11 @@ function initializeEventListeners() {
             // Reset category dropdown
             if (elements.categoryFilter) {
                 elements.categoryFilter.value = 'all';
+            }
+            
+            // Reset author dropdown
+            if (elements.authorFilter) {
+                elements.authorFilter.value = 'all';
             }
             
             // Reset status toggle

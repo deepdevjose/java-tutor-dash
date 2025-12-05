@@ -92,7 +92,7 @@
                     <!-- Search Box -->
                     <div class="search-box">
                         <i data-feather="search"></i>
-                        <input type="text" id="searchInput" placeholder="Buscar ejercicios..." aria-label="Buscar">
+                        <input type="text" id="searchInput" placeholder="Buscar ejercicios por título, descripción, categoría o autor..." aria-label="Buscar">
                     </div>
                     <!-- Header Actions -->
                     <div class="header-actions">
@@ -182,6 +182,17 @@
                             </label>
                             <select id="categoryFilter" class="filter-select">
                                 <option value="all">Todas las categorías</option>
+                            </select>
+                        </div>
+
+                        <!-- Author Filter - Dropdown -->
+                        <div class="filter-group">
+                            <label class="filter-label" for="authorFilter">
+                                <i data-feather="user"></i>
+                                Autor
+                            </label>
+                            <select id="authorFilter" class="filter-select">
+                                <option value="all">Todos los autores</option>
                             </select>
                         </div>
 
