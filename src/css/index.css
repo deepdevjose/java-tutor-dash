@@ -142,13 +142,11 @@ body, html {
     width: 42px;
     height: 42px;
     border-radius: 12px;
-    box-shadow: 0 6px 20px var(--java-blue-glow);
     transition: all 0.3s ease;
 }
 
 .logo:hover .logo-icon {
-    box-shadow: 0 8px 30px rgba(0, 115, 150, 0.4);
-    transform: scale(1.05) rotate(-5deg);
+    transform: scale(1.05);
 }
 
 /* 4. Contenido Principal Premium */
