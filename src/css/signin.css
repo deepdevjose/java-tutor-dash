@@ -116,15 +116,12 @@ body {
 .logo-icon {
     width: 42px;
     height: 42px;
-    background: linear-gradient(135deg, var(--java-blue) 0%, var(--java-blue-light) 100%);
     border-radius: 12px;
-    box-shadow: 0 4px 20px var(--java-blue-glow);
     transition: all 0.3s ease;
 }
 
 .logo:hover .logo-icon {
-    box-shadow: 0 8px 30px rgba(0, 115, 150, 0.4);
-    transform: rotate(-5deg) scale(1.05);
+    transform: scale(1.05);
 }
 
 .logo span {
