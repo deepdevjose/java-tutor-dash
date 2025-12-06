@@ -303,7 +303,8 @@ body {
 .sidebar.collapsed .link-text,
 .sidebar.collapsed .submenu-toggle,
 .sidebar.collapsed .commit-details, /* Ocultar detalles del commit */
-.sidebar.collapsed .user-details { /* Ocultar detalles del usuario */
+.sidebar.collapsed .user-details, /* Ocultar detalles del usuario */
+.sidebar.collapsed .logo-icon { /* Ocultar icono de Java */
     opacity: 0;
     width: 0;
     height: 0; /* Asegurar colapso vertical */
