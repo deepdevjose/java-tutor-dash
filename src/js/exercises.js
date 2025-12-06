@@ -383,6 +383,9 @@ async function loadUserProgress() {
         
         console.log(`✅ ${completedExercises.size} ejercicios completados`);
         
+        // Actualizar estadísticas después de cargar el progreso
+        updateStatsBar();
+        
     } catch (error) {
         console.error('❌ Error al cargar progreso:', error);
     }
@@ -456,6 +459,8 @@ function renderExercises() {
     console.log('📦 Total ejercicios en allExercises:', allExercises.length);
     
     // Actualizar barra de estadísticas
+    updateStatsBar();
+    
     // Obtener valores de los filtros toggle
     const difficultyFilter = elements.difficultyToggle?.querySelector('.toggle-btn.active')?.dataset.value || 'all';
     const categoryFilter = elements.categoryFilter?.value || 'all';
@@ -877,6 +882,9 @@ function displayResults(result) {
         // Actualizar estado del ejercicio
         currentExercise.completed = true;
         renderExercises();
+        
+        // Actualizar estadísticas
+        updateStatsBar();
         
         // Invalidar caché de progreso
         const cacheKey = `user_progress_${currentUser.uid}`;
