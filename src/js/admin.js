@@ -335,8 +335,7 @@ async function loadExercises() {
                     console.log('📦 Cargando ejercicios desde caché');
                     allExercises = data;
                     populateAuthorFilter();
-                    filteredExercises = [...allExercises];
-                    renderExercises(filteredExercises);
+                    applyFilters();
                     return;
                 }
             }
@@ -367,9 +366,8 @@ async function loadExercises() {
         // Populate author filter
         populateAuthorFilter();
         
-        // Initial render
-        filteredExercises = [...allExercises];
-        renderExercises(filteredExercises);
+        // Apply filters to maintain current filter state
+        applyFilters();
         
     } catch (error) {
         console.error('❌ Error al cargar ejercicios:', error);
@@ -448,6 +446,9 @@ function getDifficultyLabel(difficulty) {
 function populateAuthorFilter() {
     if (!elements.authorFilter) return;
     
+    // Preservar el valor actual del filtro
+    const currentAuthorFilter = elements.authorFilter.value;
+    
     // Get unique authors
     const authors = [...new Set(allExercises
         .map(ex => ex.author)
@@ -462,6 +463,11 @@ function populateAuthorFilter() {
         option.textContent = author;
         elements.authorFilter.appendChild(option);
     });
+    
+    // Restaurar el valor del filtro si aún existe en la lista
+    if (currentAuthorFilter && (currentAuthorFilter === 'all' || authors.includes(currentAuthorFilter))) {
+        elements.authorFilter.value = currentAuthorFilter;
+    }
 }
 
 function applyFilters() {
